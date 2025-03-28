@@ -1,14 +1,51 @@
 "use client";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import useSWRMutation from "swr/mutation";
+import Link from "next/link";
 
 interface IRegister {
   showModalRegister: boolean;
   setShowModalRegister: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowModalLogin: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowModalVerifyOTP : React.Dispatch<React.SetStateAction<boolean>>;
   onHide: () => void;
 }
 
+
+const registerFetcher = async (
+  url: string,
+  { arg }: { 
+    arg: { 
+        Username: string;
+        Password: string;
+        Role: string;
+        Email: string;
+        Otp: string;
+        OtpExpiry: string;
+        PatientName: string;
+        DateOfBirth: string;
+        Gender: string;
+        Phone: string;
+    } 
+}
+) => {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(arg),
+  });
+
+  if (!res.ok) {
+    throw new Error("Đăng ký thất bại");
+  }
+  return res.json();
+};
+
+
 export default function Register(props: IRegister) {
-  const { showModalRegister, setShowModalRegister } = props;
+  const { showModalRegister, setShowModalRegister, setShowModalLogin } = props;
+  const [userName, setUserName] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -16,168 +53,404 @@ export default function Register(props: IRegister) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
-  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState({
+    userName: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    dob: "",
+    gender: "",
+    agreeToTerms: ""
+  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleRegister = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (!showModalRegister) {
+      setFullName("");
+      setEmail("");
+      setPhone("");
+      setPassword("");
+      setConfirmPassword("");
+      setDob("");
+      setGender("");
+      setAgreeToTerms(false);
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+      setErrors({
+        userName: "",
+        fullName: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+        dob: "",
+        gender: "",
+        agreeToTerms: ""
+      });
+      setIsSubmitted(false);
+    }
+  }, [showModalRegister]);
+
+  const { trigger, isMutating } = useSWRMutation(
+    "http://localhost:5062/api/User/register",
+    registerFetcher
+  );
+
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Full Name:", fullName);
-    console.log("Email:", email);
-    console.log("Phone:", phone);
-    console.log("Password:", password);
-    console.log("Confirm Password:", confirmPassword);
-    console.log("Date of Birth:", dob);
-    console.log("Gender:", gender);
-    console.log("Agree to Terms:", agreeTerms);
-  };
-
-  const handleForgotPassword = () => {
-    alert("Chức năng quên mật khẩu đang được phát triển!");
+    setIsSubmitted(true);
+  
+    const newErrors = {
+      userName: "",
+      fullName: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      dob: "",
+      gender: "",
+      agreeToTerms: "",
+    };
+  
+    if (!userName) newErrors.userName = "Vui lòng nhập User Name";
+    if (!fullName) newErrors.fullName = "Vui lòng nhập họ và tên";
+    if (!email) {
+      newErrors.email = "Vui lòng nhập email";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email không hợp lệ";
+    }
+    if (!phone) {
+      newErrors.phone = "Vui lòng nhập số điện thoại";
+    } else if (!/^[0-9]{10}$/.test(phone)) {
+      newErrors.phone = "Số điện thoại không hợp lệ";
+    }
+    if (!password) {
+      newErrors.password = "Vui lòng nhập mật khẩu";
+    } else if (password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+    } else if (confirmPassword !== password) {
+      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
+    }
+    if (!dob) newErrors.dob = "Vui lòng chọn ngày sinh";
+    if (!gender) newErrors.gender = "Vui lòng chọn giới tính";
+    if (!agreeToTerms) newErrors.agreeToTerms = "Vui lòng đồng ý với điều khoản sử dụng";
+  
+    setErrors(newErrors);
+  
+    if (!Object.values(newErrors).some((error) => error !== "")) {
+      try {
+        await trigger({
+          Username: userName,
+          Password: password,
+          Role: "Patient",
+          Email: email,
+          Otp: "123456",
+          OtpExpiry: new Date().toISOString(),
+          PatientName: fullName,
+          DateOfBirth: dob,
+          Gender: gender,
+          Phone: phone,
+        });
+  
+        alert("Đăng ký thành công!");
+        setShowModalRegister(false);
+        setShowModalLogin(true);
+      } catch {
+        alert("Đăng ký thất bại, vui lòng thử lại!");
+      }
+    }
   };
 
   const handleLogin = () => {
+    setFullName("");
+    setEmail("");
+    setPhone("");
+    setPassword("");
+    setConfirmPassword("");
+    setDob("");
+    setGender("");
+    setAgreeToTerms(false);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setErrors({
+      userName: "",
+      fullName: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      dob: "",
+      gender: "",
+      agreeToTerms: ""
+    });
+    setIsSubmitted(false);
     setShowModalRegister(false);
-    alert("Chuyển sang form đăng nhập!");
+    setShowModalLogin(true);
+  };
+
+  const handleClose = () => {
+    setFullName("");
+    setEmail("");
+    setPhone("");
+    setPassword("");
+    setConfirmPassword("");
+    setDob("");
+    setGender("");
+    setAgreeToTerms(false);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setErrors({
+      userName: "",
+      fullName: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      dob: "",
+      gender: "",
+      agreeToTerms: ""
+    });
+    setIsSubmitted(false);
+    setShowModalRegister(false);
   };
 
   if (!showModalRegister) return null;
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="relative w-full max-w-md bg-gray-50 rounded-lg shadow-lg px-8 py-10">
-        <button
-          onClick={() => setShowModalRegister(false)}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold"
-          aria-label="Close"
-        >
-          &times;
-        </button>
 
-        <div className="flex flex-col items-center mb-8">
-          <span className="text-2xl font-bold text-[#00BCD4]">Đăng ký tài khoản StrokeAI</span>
+  
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/25 z-50">
+      <div className="w-full max-w-[600px] bg-white rounded-3xl p-8 relative">
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <div className="flex items-center justify-center mb-6">
+          <Image src="/logo.png" alt="StrokeAI Logo" width={48} height={48} className="mr-2" />
+          <h2 className="!text-[#00BDD6] !font-bold text-2xl">StrokeAI</h2>
         </div>
+        <p className="text-sm text-gray-500 mb-6 text-center max-w-[400px] mx-auto">
+          Một tài khoản StrokeAI là tất cả những gì bạn cần để truy cập tất cả các dịch vụ StrokeAI.
+        </p>
 
         <form onSubmit={handleRegister} className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
           <div>
-            <input
-              type="text"
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="block w-full rounded-lg bg-white px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00BCD4]"
-              placeholder="Họ và tên"
-              required
-            />
+              <input
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className={`w-full bg-[#F8FBFF] rounded-xl px-4 py-3 text-sm border ${isSubmitted && errors.fullName ? 'border-red-500' : 'border-transparent'} focus:outline-none placeholder:text-gray-400`}
+                placeholder="User Name"
+                required
+              />
+              {isSubmitted && errors.userName && (
+                <p className="text-red-500 text-xs mt-1">{errors.userName}</p>
+              )}
+            </div>
+            <div>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className={`w-full bg-[#F8FBFF] rounded-xl px-4 py-3 text-sm border ${isSubmitted && errors.fullName ? 'border-red-500' : 'border-transparent'} focus:outline-none placeholder:text-gray-400`}
+                placeholder="Họ và tên"
+                required
+              />
+              {isSubmitted && errors.fullName && (
+                <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>
+              )}
+            </div>
+          </div>
+           
+          <div className="grid grid-cols-2 gap-6">
+          <div>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className={`w-full bg-[#F8FBFF] rounded-xl px-4 py-3 text-sm border ${isSubmitted && errors.fullName ? 'border-red-500' : 'border-transparent'} focus:outline-none placeholder:text-gray-400`}
+                placeholder="Phone Number"
+                required
+              />
+              {isSubmitted && errors.phone && (
+                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+              )}
+            </div>
+            <div>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`w-full bg-[#F8FBFF] rounded-xl px-4 py-3 text-sm border ${isSubmitted && errors.fullName ? 'border-red-500' : 'border-transparent'} focus:outline-none placeholder:text-gray-400`}
+                placeholder="Email"
+                required
+              />
+              {isSubmitted && errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
+            </div>
+          </div>
+        
+
+          <div className="grid grid-cols-2 gap-6">
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`w-full bg-[#F8FBFF] rounded-xl px-4 py-3 text-sm border ${isSubmitted && errors.password ? 'border-red-500' : 'border-transparent'} focus:outline-none pr-10 placeholder:text-gray-400`}
+                placeholder="Mật khẩu"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                )}
+              </button>
+              {isSubmitted && errors.password && (
+                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+              )}
+            </div>
+
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={`w-full bg-[#F8FBFF] rounded-xl px-4 py-3 text-sm border ${isSubmitted && errors.confirmPassword ? 'border-red-500' : 'border-transparent'} focus:outline-none pr-10 placeholder:text-gray-400`}
+                placeholder="Xác nhận mật khẩu"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                )}
+              </button>
+              {isSubmitted && errors.confirmPassword && (
+                <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+              )}
+            </div>
           </div>
 
-          <div>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="block w-full rounded-lg bg-white px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00BCD4]"
-              placeholder="Email"
-              required
-            />
-          </div>
-
-          <div>
-            <input
-              type="tel"
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="block w-full rounded-lg bg-white px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00BCD4]"
-              placeholder="Số điện thoại"
-              required
-            />
-          </div>
-
-          <div>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="block w-full rounded-lg bg-white px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00BCD4]"
-              placeholder="Mật khẩu"
-              required
-            />
-          </div>
-
-          <div>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="block w-full rounded-lg bg-white px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00BCD4]"
-              placeholder="Xác nhận mật khẩu"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div>
               <input
                 type="date"
-                id="dob"
                 value={dob}
                 onChange={(e) => setDob(e.target.value)}
-                className="block w-full rounded-lg bg-white px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00BCD4]"
+                className={`w-full bg-[#F8FBFF] rounded-xl px-4 py-3 text-sm border ${isSubmitted && errors.dob ? 'border-red-500' : 'border-transparent'} focus:outline-none text-gray-400`}
                 required
               />
+              {isSubmitted && errors.dob && (
+                <p className="text-red-500 text-xs mt-1">{errors.dob}</p>
+              )}
             </div>
 
             <div>
               <select
-                id="gender"
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
-                className="block w-full rounded-lg bg-white px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00BCD4]"
+                className={`w-full bg-[#F8FBFF] rounded-xl px-4 py-3 text-sm border ${isSubmitted && errors.gender ? 'border-red-500' : 'border-transparent'} focus:outline-none appearance-none text-gray-400 ${!gender ? 'text-gray-400' : 'text-gray-900'}`}
                 required
+                data-placeholder="Giới tính"
               >
-                <option value="">Giới tính</option>
+                <option value="" disabled className="hidden">Giới tính</option>
                 <option value="male">Nam</option>
                 <option value="female">Nữ</option>
-                <option value="other">Khác</option>
               </select>
+              {isSubmitted && errors.gender && (
+                <p className="text-red-500 text-xs mt-1">{errors.gender}</p>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="agreeTerms"
-              checked={agreeTerms}
-              onChange={(e) => setAgreeTerms(e.target.checked)}
-              className="w-4 h-4 text-[#00BCD4] rounded focus:ring-[#00BCD4]"
-              required
-            />
-            <label htmlFor="agreeTerms" className="ml-2 text-sm text-gray-600">
-              Tôi xác nhận rằng tôi đã đọc, chấp thuận và đồng ý với Điều khoản sử dụng và Chính sách bảo mật của StrokeAI
-            </label>
-          </div>
+          <div className="text-xs text-gray-500 leading-relaxed">
+  <label className="flex items-start">
+    <input
+      type="checkbox"
+      checked={agreeToTerms}
+      onChange={(e) => setAgreeToTerms(e.target.checked)}
+      className={`h-4 w-4 rounded border ${isSubmitted && errors.agreeToTerms ? 'border-red-500' : 'border-gray-300'} text-[#00BDD6] focus:ring-[#00BDD6]`}
+      required
+    />
+    <span className="ml-2">
+      Tôi xác nhận rằng tôi đã đọc, chấp thuận và đồng ý với{" "}
+      <Link
+  href="/terms_of_service"
+  className="text-[#00BDD6] hover:underline"
+  onClick={() => setShowModalRegister(false)}
+>
+  Điều khoản sử dụng
+</Link>
+{" "}
+      và{" "}
+  <Link 
+    href="/privacy_policy" 
+    className="text-[#00BDD6] hover:underline pr-1"
+    onClick={() => setShowModalRegister(false)}
+  >
+    Chính sách bảo mật 
+  </Link>
+
+      của StrokeAI.
+    </span>
+  </label>
+
+  {isSubmitted && errors.agreeToTerms && (
+    <p className="text-red-500 text-xs mt-1">{errors.agreeToTerms}</p>
+  )}
+</div>
+
 
           <button
             type="submit"
-            className="w-full py-3 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-semibold hover:opacity-90"
+            className="w-full bg-[#00BDD6] text-white !rounded-full py-3 text-sm font-medium hover:bg-[#00a8bf] transition-colors mt-4"
+            disabled={isMutating}
           >
-            Đăng ký
+           {isMutating ? "Đang đăng ký..." : "Đăng Ký"}
           </button>
         </form>
 
-        <div className="text-center mt-6 text-sm">
-          <button
-            onClick={handleForgotPassword}
-            className="font-semibold text-[#00BCD4] hover:text-[#008B9E]"
-          >
-            Quên mật khẩu?
-          </button>{" "}
-          |{" "}
+        <div className="text-center mt-4 text-sm text-gray-500">
+          <span>Bạn đã có tài khoản? </span>
           <button
             onClick={handleLogin}
-            className="font-semibold text-[#00BCD4] hover:text-[#008B9E]"
+            className="text-[#00BDD6] font-medium hover:underline"
           >
             Đăng nhập
           </button>
