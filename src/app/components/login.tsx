@@ -10,6 +10,8 @@ interface ILogin {
   showModalLogin: boolean;
   setShowModalLogin: React.Dispatch<React.SetStateAction<boolean>>;
   setShowModalRegister: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowModalResetPasswordOTP: React.Dispatch<React.SetStateAction<boolean>>;
+  setEmailForReset: React.Dispatch<React.SetStateAction<string>>;
   onHide: () => void;
 }
 
@@ -27,7 +29,13 @@ const fetcher = async (url: string, { arg }: { arg: { Credential: string; Passwo
   return res.json();
 };
 
-export default function Login({ showModalLogin, setShowModalLogin, setShowModalRegister }: ILogin) {
+export default function Login({ 
+  showModalLogin, 
+  setShowModalLogin, 
+  setShowModalRegister,
+  setShowModalResetPasswordOTP,
+  setEmailForReset,
+ }: ILogin) {
   const router = useRouter();
   const [credential, setCredential] = useState("");
   const [password, setPassword] = useState("");
@@ -77,13 +85,15 @@ export default function Login({ showModalLogin, setShowModalLogin, setShowModalR
   return (
     <>
       {showModalForgotPassword && (
-        <ForgotPassword
-          showModalForgotPassword={showModalForgotPassword}
-          setShowModalForgotPassword={setShowModalForgotPassword}
-          setShowModalLogin={setShowModalLogin}
-          onHide={() => setShowModalForgotPassword(false)}
-        />
-      )}
+  <ForgotPassword
+    showModalForgotPassword={showModalForgotPassword}
+    setShowModalForgotPassword={setShowModalForgotPassword}
+    setShowModalLogin={setShowModalLogin}
+    setShowModalResetPasswordOTP={setShowModalResetPasswordOTP}
+    setEmailForReset={setEmailForReset}
+    onHide={() => setShowModalForgotPassword(false)}
+  />
+)}
       {showModalLogin && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/25 z-50">
           <div className="w-full max-w-[500px] bg-white rounded-3xl p-8 relative">

@@ -28,18 +28,22 @@ const forgotPasswordFetcher = async (url: string, { arg }: { arg: { Email: strin
 };
 
 
-
 interface IForgotPassword {
   showModalForgotPassword: boolean;
   setShowModalForgotPassword: React.Dispatch<React.SetStateAction<boolean>>;
   setShowModalLogin: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowModalResetPasswordOTP: React.Dispatch<React.SetStateAction<boolean>>;
+  setEmailForReset: (email: string) => void;
   onHide?: () => void;
 }
+
 
 export default function ForgotPassword({
   showModalForgotPassword,
   setShowModalForgotPassword,
   setShowModalLogin,
+  setShowModalResetPasswordOTP,
+  setEmailForReset,
 }: IForgotPassword) {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -78,8 +82,10 @@ export default function ForgotPassword({
 
     try {
       const result = await trigger({ Email: email });
-      alert(result.message); // Show success message
+      alert(result.message);
+      setEmailForReset(email); 
       setShowModalForgotPassword(false);
+      setShowModalResetPasswordOTP(true);
     } catch (error) {
       setForgotPasswordError(
         error instanceof Error ? error.message : "Đặt lại mật khẩu thất bại"

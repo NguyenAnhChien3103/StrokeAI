@@ -10,6 +10,8 @@ import Register from "./register";
 import { Button } from "react-bootstrap";
 import VerifyOTP from "./verify";
 import { FaUserCircle } from "react-icons/fa";
+import ResetPasswordOTP from "./verify_reset_password";
+import ForgotPassword from "./forgot_password";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +20,9 @@ const Header = () => {
   const [showModalVerifyOTP, setShowModalVerifyOTP] = useState(false);
   const [patientName, setPatientName] = useState<string>("");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [emailForReset, setEmailForReset] = useState("");
+  const [showModalResetPasswordOTP, setShowModalResetPasswordOTP] = useState(false);
+  const [showModalForgotPassword, setShowModalForgotPassword] = useState(false);
 
   interface User {
     id: string;
@@ -64,12 +69,14 @@ const Header = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     setUser(null);
     setShowDropdown(false);
     if (pathname === "/profile_information" || pathname === "/dashboard") {
       router.push("/");
     }
   };
+  
 
   const handleChangePassword = () => {
     router.push('/change_password');
@@ -77,25 +84,45 @@ const Header = () => {
 
   return (
     <>
-      <VerifyOTP
-        showModalVerifyOTP={showModalVerifyOTP}
-        setShowModalVerifyOTP={setShowModalVerifyOTP}
-        setShowModalRegister={setShowModalRegister}
-        onHide={() => setShowModalVerifyOTP(false)}
-      />
-      <Register
-        showModalRegister={showModalRegister}
-        setShowModalRegister={setShowModalRegister}
-        setShowModalLogin={setShowModalLogin}
-        setShowModalVerifyOTP={setShowModalVerifyOTP}
-        onHide={() => setShowModalRegister(false)}
-      />
-      <Login
-        showModalLogin={showModalLogin}
-        setShowModalLogin={setShowModalLogin}
-        setShowModalRegister={setShowModalRegister}
-        onHide={() => setShowModalLogin(false)}
-      />
+
+<ForgotPassword 
+      showModalForgotPassword={showModalForgotPassword}
+      setShowModalForgotPassword={setShowModalForgotPassword}
+      setShowModalLogin={setShowModalLogin}
+      setShowModalResetPasswordOTP={setShowModalResetPasswordOTP}
+      setEmailForReset={setEmailForReset}
+    />
+      <ResetPasswordOTP
+      showModalResetPasswordOTP={showModalResetPasswordOTP}
+      setShowModalResetPasswordOTP={setShowModalResetPasswordOTP}
+      setShowModalForgotPassword={setShowModalForgotPassword}
+      email={emailForReset}
+    />
+    
+    <VerifyOTP
+      showModalVerifyOTP={showModalVerifyOTP}
+      setShowModalVerifyOTP={setShowModalVerifyOTP}
+      setShowModalRegister={setShowModalRegister}
+      onHide={() => setShowModalVerifyOTP(false)}
+    />
+
+    <Register
+      showModalRegister={showModalRegister}
+      setShowModalRegister={setShowModalRegister}
+      setShowModalLogin={setShowModalLogin}
+      setShowModalVerifyOTP={setShowModalVerifyOTP}
+      onHide={() => setShowModalRegister(false)}
+    />
+
+    <Login
+      showModalLogin={showModalLogin}
+      setShowModalLogin={setShowModalLogin}
+      setShowModalRegister={setShowModalRegister}
+      setShowModalResetPasswordOTP={setShowModalResetPasswordOTP}
+      setEmailForReset={setEmailForReset}
+      onHide={() => setShowModalLogin(false)}
+    />
+      
       <header className="bg-white shadow-md rounded-full px-6 py-3 flex items-center justify-between w-full max-w-6xl mx-auto mt-4">
         <Link href="/" className="!no-underline">
           <div className="flex items-center space-x-2">
