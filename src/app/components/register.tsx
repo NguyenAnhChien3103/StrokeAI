@@ -12,36 +12,57 @@ interface IRegister {
   onHide: () => void;
 }
 
-
 const registerFetcher = async (
   url: string,
   { arg }: { 
     arg: { 
-        Username: string;
-        Password: string;
-        Role: string;
-        Email: string;
-        Otp: string;
-        OtpExpiry: string;
-        PatientName: string;
-        DateOfBirth: string;
-        Gender: string;
-        Phone: string;
+      Username: string;
+      Password: string;
+      Email: string;
+      PatientName: string;
+      DateOfBirth: string;
+      Gender: boolean;
+      Phone: string;
     } 
-}
-) => {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(arg),
-  });
-
-  if (!res.ok) {
-    throw new Error("Đăng ký thất bại");
   }
-  return res.json();
-};
+) => {
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(arg),
+    });
 
+    let data;
+    const textData = await res.text();
+    try {
+      data = JSON.parse(textData);
+    } catch {
+      data = textData;
+    }
+
+    if (!res.ok) {
+      if (typeof data === 'string') {
+        throw new Error(data);
+      }
+      if (data && typeof data === 'object') {
+        if (data.errors) {
+          const errorMessages = Object.values(data.errors).flat();
+          throw new Error(errorMessages.join('. '));
+        }
+        throw new Error(data.message || data.title || "Đăng ký thất bại");
+      }
+      throw new Error("Đăng ký thất bại");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    console.error('Lỗi đăng kí :', error);
+    throw error instanceof Error ? error : new Error("Đăng ký thất bại");
+  }
+};
 
 export default function Register(props: IRegister) {
   const { showModalRegister, setShowModalRegister, setShowModalLogin } = props;
@@ -102,135 +123,104 @@ export default function Register(props: IRegister) {
   );
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitted(true);
-  
-    const newErrors = {
-      userName: "",
-      fullName: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-      dob: "",
-      gender: "",
-      agreeToTerms: "",
-    };
-  
-    if (!userName) newErrors.userName = "Vui lòng nhập User Name";
-    if (!fullName) newErrors.fullName = "Vui lòng nhập họ và tên";
-    if (!email) {
-      newErrors.email = "Vui lòng nhập email";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email không hợp lệ";
-    }
-    if (!phone) {
-      newErrors.phone = "Vui lòng nhập số điện thoại";
-    } else if (!/^[0-9]{10}$/.test(phone)) {
-      newErrors.phone = "Số điện thoại không hợp lệ";
-    }
-    if (!password) {
-      newErrors.password = "Vui lòng nhập mật khẩu";
-    } else if (password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-    }
-    if (!confirmPassword) {
-      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
-    } else if (confirmPassword !== password) {
-      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
-    }
-    if (!dob) newErrors.dob = "Vui lòng chọn ngày sinh";
-    if (!gender) newErrors.gender = "Vui lòng chọn giới tính";
-    if (!agreeToTerms) newErrors.agreeToTerms = "Vui lòng đồng ý với điều khoản sử dụng";
-  
-    setErrors(newErrors);
-  
-    if (!Object.values(newErrors).some((error) => error !== "")) {
-      try {
-        await trigger({
-          Username: userName,
-          Password: password,
-          Role: "Patient",
-          Email: email,
-          Otp: "123456",
-          OtpExpiry: new Date().toISOString(),
-          PatientName: fullName,
-          DateOfBirth: dob,
-          Gender: gender,
-          Phone: phone,
-        });
-  
-        alert("Đăng ký thành công!");
-        setShowModalRegister(false);
-        setShowModalLogin(true);
-      } catch {
-        alert("Đăng ký thất bại, vui lòng thử lại!");
+  e.preventDefault();
+  setIsSubmitted(true);
+
+  const newErrors = {
+    userName: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "", 
+    confirmPassword: "",
+    dob: "",
+    gender: "",
+    agreeToTerms: ""
+  };
+
+  if (!userName) newErrors.userName = "Vui lòng nhập User Name";
+  if (!fullName) newErrors.fullName = "Vui lòng nhập họ và tên";
+  if (!email) {
+    newErrors.email = "Vui lòng nhập email";
+  } else if (!/\S+@\S+\.\S+/.test(email)) {
+    newErrors.email = "Email không hợp lệ";
+  }
+  if (!phone) {
+    newErrors.phone = "Vui lòng nhập số điện thoại";
+  } else if (!/^[0-9]{10}$/.test(phone)) {
+    newErrors.phone = "Số điện thoại không hợp lệ";
+  }
+  if (!password) {
+    newErrors.password = "Vui lòng nhập mật khẩu";
+  } else if (password.length < 6) {
+    newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+  }
+  if (!confirmPassword) {
+    newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+  } else if (confirmPassword !== password) {
+    newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
+  }
+  if (!dob) newErrors.dob = "Vui lòng chọn ngày sinh";
+  if (!gender) newErrors.gender = "Vui lòng chọn giới tính";
+  if (!agreeToTerms) newErrors.agreeToTerms = "Vui lòng đồng ý với điều khoản sử dụng";
+
+  setErrors(newErrors);
+
+  if (!Object.values(newErrors).some((error) => error !== "")) {
+    try {
+      const registerData = {
+        Username: userName,
+        Password: password,
+        Email: email,
+        PatientName: fullName,
+        DateOfBirth: new Date(dob).toISOString(),
+        Gender: gender === 'male',
+        Phone: phone,
+      };
+      
+      await trigger(registerData);
+      sessionStorage.setItem("registerData", JSON.stringify({
+        ...registerData,
+        credentials: {
+          email: email,
+          username: userName,
+          phone: phone,
+        },
+        Password: password
+      }));
+
+      alert("Vui lòng kiểm tra email để lấy mã OTP!");
+      setShowModalRegister(false);
+      props.setShowModalVerifyOTP(true);
+      
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("Đăng ký thất bại");
       }
     }
-  };
-
-  const handleLogin = () => {
-    setFullName("");
-    setEmail("");
-    setPhone("");
-    setPassword("");
-    setConfirmPassword("");
-    setDob("");
-    setGender("");
-    setAgreeToTerms(false);
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setErrors({
-      userName: "",
-      fullName: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-      dob: "",
-      gender: "",
-      agreeToTerms: ""
-    });
-    setIsSubmitted(false);
-    setShowModalRegister(false);
-    setShowModalLogin(true);
-  };
-
-  const handleClose = () => {
-    setFullName("");
-    setEmail("");
-    setPhone("");
-    setPassword("");
-    setConfirmPassword("");
-    setDob("");
-    setGender("");
-    setAgreeToTerms(false);
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setErrors({
-      userName: "",
-      fullName: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-      dob: "",
-      gender: "",
-      agreeToTerms: ""
-    });
-    setIsSubmitted(false);
-    setShowModalRegister(false);
-  };
+  }
+};
 
   if (!showModalRegister) return null;
 
 
-  
+  const handleClose = () => {
+    setShowModalRegister(false);
+  };
+
+  const handleLogin = () => {
+    setShowModalRegister(false);
+    setShowModalLogin(true);
+  };
+
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/25 z-50">
       <div className="w-full max-w-[600px] bg-white rounded-3xl p-8 relative">
         <button
-          onClick={handleClose}
+          onClick={() => handleClose()}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -362,7 +352,7 @@ export default function Register(props: IRegister) {
                 )}
               </button>
               {isSubmitted && errors.confirmPassword && (
-                <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                <div className="text-red-500 text-xs mt-1">{errors.confirmPassword}</div>
               )}
             </div>
           </div>

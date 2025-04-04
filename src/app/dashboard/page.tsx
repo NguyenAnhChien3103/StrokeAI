@@ -3,7 +3,6 @@
 import { TrendingUp } from "lucide-react"
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts"
 import { CartesianGrid, LabelList, Line, LineChart, XAxis } from "recharts"
-import { Bar, BarChart } from "recharts"
 
 import {
   Card,
@@ -20,12 +19,12 @@ import {
   ChartTooltipContent,
 } from "@/app/components/chart"
 const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 500 },
-  { month: "April", desktop: 500 },
-  { month: "May", desktop: 500   },
-  { month: "June", desktop: 214 },
+  { month: "January", desktop: 600 },
+  { month: "February", desktop: 600 },
+  { month: "March", desktop: 600 },
+  { month: "April", desktop: 600 },
+  { month: "May", desktop: 600   },
+  { month: "June", desktop: 600 },
 ]
 
 const chartConfig = {
@@ -42,10 +41,6 @@ export default function DashBoard() {
 <>
 <Card className="w-250 h-100">
       <CardHeader className="items-center">
-        <CardTitle>Radar Chart - Dots</CardTitle>
-        <CardDescription>
-          Showing total visitors for the last 6 months
-        </CardDescription>
       </CardHeader>
       <CardContent className="pb-0">
         <ChartContainer

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, LogOut, UserIcon } from "lucide-react";
+import { Menu, X, LogOut, UserIcon, Lock } from "lucide-react";
 import Login from "./login";
 import Register from "./register";
 import { Button } from "react-bootstrap";
@@ -66,9 +66,13 @@ const Header = () => {
     localStorage.removeItem("user");
     setUser(null);
     setShowDropdown(false);
-    if (pathname === "/profile_information") {
+    if (pathname === "/profile_information" || pathname === "/dashboard") {
       router.push("/");
     }
+  };
+
+  const handleChangePassword = () => {
+    router.push('/change_password');
   };
 
   return (
@@ -133,6 +137,13 @@ const Header = () => {
                   >
                     <UserIcon size={18} className="mr-2" />
                     Thông tin cá nhân
+                  </button>
+                  <button
+                      className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
+                      onClick={handleChangePassword}
+                        >
+                     <Lock size={18} className="mr-2" />
+                     Đổi mật khẩu
                   </button>
                   <button
                     className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
