@@ -1,28 +1,30 @@
 "use client";
-import { TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
 import useSWR from "swr";
-import { Table, Modal} from 'react-bootstrap';
+import { Table} from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
+import { useEffect } from 'react';
+import Button from "react-bootstrap/Button";
+
 
 interface User {
   userId: string;
   username: string;
-  role: string;
-  patientName: string;
+  roles: string[];
+  patientName: string;  
   dateOfBirth: string;
   gender: string;
   phone: string;
   email: string;
+  token: string;
 }
 
 export default function UserManagement() {
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [genderFilter, setGenderFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [token, setToken] = useState<string | null>(null); 
 
-  // Hàm bỏ dấu
   const removeAccents = (str: string) => {
     return str.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -30,26 +32,53 @@ export default function UserManagement() {
       .replace(/Đ/g, 'D');
   };
 
-  const fetcher = (url: string) => 
-    fetch(url, {
-      method: 'GET',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = sessionStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setToken(parsedUser.token); 
       }
-    }).then((res) => res.json());
-
-  const { data: users, error, isLoading } = useSWR<User[]>(
-    "http://localhost:5062/api/User/users",
-    fetcher,
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
     }
-  );
+  }, []);
 
+  useEffect(() => { 
+    const data = sessionStorage.getItem("user");
+    if (data == null) {
+      window.location.href = "/404"; 
+    }
+  }, []);
+
+    const fetcher = (url: string) => {
+      if (!token) return Promise.reject(new Error("Token chưa sẵn sàng"));
+      return fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }).then((res) => {
+        if (!res.ok) {
+          throw new Error("Lỗi xác thực hoặc lỗi server");
+        }
+        return res.json();
+      });
+    };
+    
+
+    const { data: users, error, isLoading } = useSWR<User[]>(
+      token ? "http://localhost:5062/api/admin/users" : null,
+      token ? fetcher : null,
+      {
+        revalidateIfStale: false,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+      }
+    );
+    
   // Lọc và tìm kiếm dữ liệu
   const filteredUsers = users?.filter(user => {
     const searchTermNoAccent = removeAccents(searchTerm.toLowerCase());
@@ -63,63 +92,105 @@ export default function UserManagement() {
       (genderFilter === "male" && Number(user.gender) === 0) ||
       (genderFilter === "female" && Number(user.gender) === 1);
 
-    return matchesSearch && matchesGender;
+      const matchesRole = roleFilter === "all" || user.roles.includes(roleFilter);
+
+      return matchesSearch && matchesGender && matchesRole;
   });
+
+  const handleAddAdmin = async (userId: string) => {
+    try {
+      const response = await fetch(`http://localhost:5062/api/admin/add-admin-role/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId }) 
+      });
+  
+      if (response.ok) {
+        alert("Đã thêm quyền Admin cho người dùng.");
+        window.location.reload();
+      } else {
+        const errorText = await response.text();
+        alert("Không thể thêm quyền Admin: " + errorText);
+      }
+    } catch (error) {
+      console.error("Lỗi khi thêm quyền Admin:", error);
+      alert("Đã xảy ra lỗi khi thêm quyền Admin.");
+    }
+  };
+   
+
+  const handleRemoveAdmin = async (userId: string) => {
+    try {
+      const response = await fetch(`http://localhost:5062/api/admin/remove-admin/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+  
+      if (response.ok) {
+        alert("Đã gỡ quyền Admin khỏi người dùng.");
+        window.location.reload();
+      } else {
+        const errorText = await response.text();
+        alert("Không thể gỡ quyền Admin. " + errorText);
+      }
+    } catch (error) {
+      console.error("Lỗi khi gỡ quyền Admin:", error);
+      alert("Đã xảy ra lỗi khi gỡ quyền Admin.");
+    }
+  };
+  
+
+  
+  
 
   const handleDeleteUser = async (userId: string) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       try {
-        const response = await fetch(`http://localhost:5062/api/User/user/${userId}`, {
+        const response = await fetch(`http://localhost:5062/api/admin/delete-user/${userId}`, {
           method: "DELETE",
           mode: 'cors',
           headers: {
             "Content-Type": "application/json",
-            "Accept": "application/json"
+            "Accept": "application/json",
+            'Authorization': `Bearer ${token}`
           }
         });
-        
+  
         if (response.ok) {
+          const currentUser = sessionStorage.getItem("user");
+          if (currentUser) {
+            const parsedUser = JSON.parse(currentUser);
+            if (parsedUser.userId === userId) {
+              // Nếu xóa chính mình
+              alert("Tài khoản của bạn đã bị xóa. Hệ thống sẽ đăng xuất...");
+              sessionStorage.clear();
+              window.location.href = "/"; 
+              return;
+            }
+          }
+  
+          alert("Người dùng đã được xóa thành công.");
           window.location.reload();
         } else {
           alert("Không thể xóa người dùng. Vui lòng thử lại sau.");
         }
       } catch (error) {
-        console.error("Error deleting user:", error);
+        console.error("Lỗi khi xóa người dùng:", error);
         alert("Đã xảy ra lỗi khi xóa người dùng.");
       }
     }
   };
+  
 
-  const handleShowDetails = async (userId: string) => {
-    try {
-      const response = await fetch(`http://localhost:5062/api/User/user/${userId}`, {
-        method: 'GET',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const userData = await response.json();
-        setSelectedUser(userData);
-        setShowModal(true);
-      } else {
-        alert("Không thể tải thông tin người dùng. Vui lòng thử lại sau.");
-      }
-    } catch (error) {
-      console.error("Error fetching user details:", error);
-      alert("Đã xảy ra lỗi khi tải thông tin người dùng.");
-    }
-  };
+  
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedUser(null);
-  };
-
-  if (error) return <div>Lỗi tải dữ liệu: {error.message}</div>;
+  if (error) return <div className="text-center !py-60 text-xl font-bold">Bạn không đủ quyền hạn để truy cập vào hệ thống quản lý người dùng . Vui lòng đăng nhập lại bằng tài khoản admin</div>;
   if (isLoading) return <div>Đang tải...</div>;
   if (!users) return <div>Không có dữ liệu</div>;
 
@@ -163,6 +234,19 @@ export default function UserManagement() {
             <option value="female">Nữ</option>
           </select>
         </div>
+
+        <div className="w-full sm:w-48">
+        <select
+           value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+           >
+          <option value="all">Tất cả vai trò</option>
+          <option value="admin">Admin</option>
+          <option value="user">User</option>
+       </select>
+    </div>
+
       </div>
 
       {error && (
@@ -189,7 +273,7 @@ export default function UserManagement() {
           <Table striped bordered hover responsive>
             <thead>
               <tr>
-                <th>STT</th>
+                <th>ID</th>
                 <th>Tên đăng nhập</th>
                 <th>Vai trò</th>
                 <th>Tên bệnh nhân</th>
@@ -197,7 +281,7 @@ export default function UserManagement() {
                 <th>Giới tính</th>
                 <th>Số điện thoại</th>
                 <th>Email</th>
-                <th>Thao tác</th>
+                <th className="text-center">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -205,84 +289,41 @@ export default function UserManagement() {
                 <tr key={user.userId}>
                   <td>{user.userId}</td>
                   <td>{user.username}</td>
-                  <td>{user.role}</td>
+                  <td>{user.roles.join(", ")}</td>  
                   <td>{user.patientName}</td>
                   <td>{new Date(user.dateOfBirth).toLocaleDateString('vi-VN')}</td>
                   <td>{Number(user.gender) === 0 ? "Nam" : "Nữ"}</td>
                   <td>{user.phone}</td>
                   <td>{user.email}</td>
+
                   <td>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleShowDetails(user.userId)}
-                        className="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-100 transition-colors"
-                      >
-                        <EyeIcon className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteUser(user.userId)}
-                        className="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-100 transition-colors"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </td>
+  <div className="flex flex-wrap gap-2">
+    <Button
+      variant="danger"
+      onClick={() => handleDeleteUser(user.userId)}
+    >
+      Xóa tài khoản
+    </Button>
+
+      <Button
+        onClick={() => handleRemoveAdmin(user.userId)}
+        variant="warning"
+      >
+        Gỡ Admin
+      </Button>
+      <Button
+        onClick={() => handleAddAdmin(user.userId)}
+        variant="info" 
+      >
+        Thêm Admin
+      </Button>
+  </div>
+</td>
+
                 </tr>
               ))}
             </tbody>
           </Table>
-
-          {/* User Details Modal */}
-          <Modal show={showModal} onHide={handleCloseModal} size="lg" centered className="user-details-modal">
-            <Modal.Header closeButton className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0 py-3">
-              <Modal.Title className="text-lg font-bold flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Chi tiết người dùng
-              </Modal.Title>
-            </Modal.Header>
-            <Modal.Body className="p-6 bg-gray-50">
-              {selectedUser && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <div>
-                      <h6 className="text-xs font-semibold text-cyan-600 mb-1">Tên đăng nhập</h6>
-                      <p className="text-sm text-gray-800 font-medium">{selectedUser.username}</p>
-                    </div>
-                    <div>
-                      <h6 className="text-xs font-semibold text-blue-600 mb-1">Vai trò</h6>
-                      <p className="text-sm text-gray-800 font-medium">{selectedUser.role}</p>
-                    </div>
-                    <div>
-                      <h6 className="text-xs font-semibold text-purple-600 mb-1">Tên bệnh nhân</h6>
-                      <p className="text-sm text-gray-800 font-medium">{selectedUser.patientName}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <h6 className="text-xs font-semibold text-green-600 mb-1">Ngày sinh</h6>
-                      <p className="text-sm text-gray-800 font-medium">{new Date(selectedUser.dateOfBirth).toLocaleDateString('vi-VN')}</p>
-                    </div>
-                    <div>
-                      <h6 className="text-xs font-semibold text-yellow-600 mb-1">Giới tính</h6>
-                      <p className="text-sm text-gray-800 font-medium">{Number(selectedUser.gender) === 0 ? "Nam" : "Nữ"}</p>
-                    </div>
-                    <div>
-                      <h6 className="text-xs font-semibold text-red-600 mb-1">Số điện thoại</h6>
-                      <p className="text-sm text-gray-800 font-medium">{selectedUser.phone}</p>
-                    </div>
-                  </div>
-                  <div className="md:col-span-2">
-                    <div>
-                      <h6 className="text-xs font-semibold text-indigo-600 mb-1">Email</h6>
-                      <p className="text-sm text-gray-800 font-medium">{selectedUser.email}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Modal.Body>
-          </Modal>
 
           <style jsx global>{`
             .user-details-modal .modal-content {

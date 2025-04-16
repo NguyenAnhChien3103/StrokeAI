@@ -1,4 +1,5 @@
 "use client";
+import React, { useEffect } from "react";
 
 const healthData = [
   {
@@ -29,6 +30,12 @@ const healthData = [
 ];
 
 export default function Health_Index_Tracking() {
+  useEffect(() => {
+    const user = sessionStorage.getItem("user");
+    if (!user) {
+      window.location.href = "/404";
+    }
+  }, []);
   return (
 <div className="min-h-screen mt-2">
 
@@ -48,7 +55,7 @@ export default function Health_Index_Tracking() {
     Chúng tôi cam kết vì sức khỏe và hạnh phúc của bạn. Hãy khám phá trang web của chúng tôi ngay hôm nay
     và tìm hiểu cách chúng tôi có thể hợp tác với bạn trên hành trình hướng đến sức khỏe tốt hơn.
   </p>
-  <button className="bg-red-500 px-5 py-3 !rounded-full font-semibold hover:bg-red-600 transition duration-300">
+  <button className="bg-cyan-500 px-5 py-3 !rounded-full font-semibold hover:bg-cyan-600 transition duration-300">
     Tìm hiểu thêm
   </button>
 </div>

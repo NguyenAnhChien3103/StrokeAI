@@ -25,6 +25,13 @@ const UserProfile = () => {
   const [newPhone, setNewPhone] = useState("");
 
   useEffect(() => {
+    const user = sessionStorage.getItem("user");
+    if (!user) {
+      window.location.href = "/404";
+    }
+  }, []);
+
+  useEffect(() => {
     try {
       const storedUser = sessionStorage.getItem("user");
       if (storedUser) {
@@ -60,9 +67,10 @@ const UserProfile = () => {
         setShowModalEditProfile={setShowModalEditProfile}
         setShowModalVerifyOTP={setShowModalVerifyOTP}
         onHide={() => setShowModalEditProfile(false)}
-        setNewEmail={setNewEmail}  
-        setNewPhone={setNewPhone}  
-      />
+        setNewEmail={setNewEmail}
+        setNewPhone={setNewPhone}
+        />
+
          <VerifyOTP
         showModalVerifyOTP={showModalVerifyOTP}
         setShowModalVerifyOTP={setShowModalVerifyOTP}
@@ -73,7 +81,7 @@ const UserProfile = () => {
         email={user.email}
       />
       <Container className="max-w-lg mx-auto !px-20 py-5">
-        <p className="font-bold !text-3xl">Thông tin người dùng</p>
+        <p className="text-2xl !font-bold text-cyan-500 mb-6">Thông tin người dùng</p>
         <div className="mt-6 space-y-4">
           <div className="flex flex-col">
             <label className="text-gray-500">User Name</label>

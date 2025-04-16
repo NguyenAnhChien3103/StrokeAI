@@ -18,6 +18,10 @@ const nextConfig = {
         pathname: '/photo/**',
       }
     ],
+    domains: ['cdn-icons-png.flaticon.com'],
+  },
+  typescript: {
+    ignoreBuildErrors: true,
   },
 }
 

@@ -7,9 +7,9 @@ interface ProfileEditProps {
   showModalEditProfile: boolean;
   setShowModalEditProfile: React.Dispatch<React.SetStateAction<boolean>>;
   setShowModalVerifyOTP: React.Dispatch<React.SetStateAction<boolean>>;
+  onHide: () => void;
   setNewEmail: React.Dispatch<React.SetStateAction<string>>;
   setNewPhone: React.Dispatch<React.SetStateAction<string>>;
-  onHide?: () => void;
 }
 
 interface User {
@@ -63,6 +63,13 @@ const ProfileEdit = ({ showModalEditProfile,
       }
     }
   }, [showModalEditProfile]);
+
+  useEffect(() => {
+    const user = sessionStorage.getItem("user");
+    if (!user) {
+      window.location.href = "/404";
+    }
+  }, []);
     
 
   const handleSave = async () => {
@@ -101,7 +108,6 @@ const ProfileEdit = ({ showModalEditProfile,
       alert("Không có thay đổi nào để cập nhật.");
       return;
     }
-  
     setLoading(true);
   
     try {
@@ -135,7 +141,7 @@ const ProfileEdit = ({ showModalEditProfile,
         const updatedUser = { ...user, patientName, dateOfBirth, gender: gender === "Nam" };
         sessionStorage.setItem("user", JSON.stringify(updatedUser));
       }
-  
+       
       if (hasEmailChanged || hasPhoneChanged) {
         setNewEmail(hasEmailChanged ? email : "");
         setNewPhone(hasPhoneChanged ? phone : "");

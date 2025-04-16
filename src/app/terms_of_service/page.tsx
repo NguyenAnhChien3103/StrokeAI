@@ -2,7 +2,7 @@
 export default function TermsOfService() {
     return (
       <div className="max-w-6xl mx-auto px-6 py-12">
-        <h2 className="text-3xl !font-bold !text-left !mb-6">Điều Khoản Sử Dụng</h2>
+        <p className="text-3xl !font-bold text-cyan-500 mb-6">Điều Khoản Sử Dụng</p>
         <p className="text-gray-700 mb-4">
           Chào mừng bạn đến với hệ thống y tế hỗ trợ người đột quỵ bằng AI. Khi sử dụng hệ thống, bạn đồng ý với các điều khoản sau đây.
         </p>

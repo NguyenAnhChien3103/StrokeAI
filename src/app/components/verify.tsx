@@ -39,10 +39,14 @@ const verifyRegisterOtpFetcher = async (
     }
 
     return textData;
-  } catch (error: any) {
-    console.error("Verify OTP error:", error);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+        console.error("Verify OTP error:", error.message);
+    } else {
+        console.error("Verify OTP error:", error);
+    }
     throw error;
-  }
+}
 };
 const verifyUpdateOtpFetcher = async (
   url: string,
@@ -57,7 +61,7 @@ const verifyUpdateOtpFetcher = async (
     console.log("Sending request with token:", user.token);
 
     const res = await fetch(url, {
-      method: "POST",
+      method: "PUT",
       headers: { 
         "Content-Type": "application/json",
         "Authorization": `Bearer ${user.token}`
@@ -93,10 +97,11 @@ const verifyUpdateOtpFetcher = async (
     }
 
     return data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Verify Update OTP error:", error);
     throw error instanceof Error ? error : new Error("Xác thực OTP thất bại");
-  }
+}
+
 };
 
 
@@ -108,8 +113,6 @@ export default function VerifyOTP({
   isUpdatingContact = false,
   newEmail,
   newPhone,
-  email,
-  password,
 }: IVerifyOTP) {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
@@ -145,15 +148,18 @@ export default function VerifyOTP({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          Credential: credential, // Can be email, username or phone
+          Credential: credential, 
           Password: password 
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Đăng nhập thất bại");
       return data;
-    } catch (error: any) {
-      throw new Error(error.message || "Đăng nhập thất bại");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message || "Đăng nhập thất bại");
+      }
+      throw new Error("Đăng nhập thất bại");
     }
   };
 
@@ -270,7 +276,7 @@ export default function VerifyOTP({
             className="w-full bg-[#F8FBFF] rounded-xl px-4 py-3 text-sm border border-gray-300 focus:outline-none text-center"
             placeholder="Nhập mã OTP"
           />
-          <button type="submit" disabled={isLoading} className="w-full mt-2 bg-cyan-500 text-white rounded-full py-3 text-sm font-medium">
+          <button type="submit" disabled={isLoading} className="w-full mt-2 bg-cyan-500 text-white !rounded-full py-3 text-sm font-medium">
             {isLoading ? "Đang xử lý..." : "Xác nhận OTP"}
           </button>
         </form>

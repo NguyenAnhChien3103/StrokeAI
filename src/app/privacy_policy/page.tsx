@@ -3,7 +3,7 @@ export default function PrivacyPolicy() {
     return (
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="text-left  mb-6">
-          <h2 className="text-3xl !font-bold text-gray-900">Chính Sách Bảo Mật</h2>
+          <p className="text-3xl !font-bold text-cyan-500 mb-6">Chính Sách Bảo Mật</p>
           <p className="text-gray-600 mt-2">Cập nhật lần cuối: 26/03/2025</p>
         </div>
   

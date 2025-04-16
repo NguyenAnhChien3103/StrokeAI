@@ -99,7 +99,7 @@ export default function ChangePassword() {
   return (
     <Container className="max-w-md mx-auto px-4 py-5 flex justify-center items-center flex-col">
     <div className="w-5xl">
-      <h2 className="text-lg text-left mb-4 !font-bold">Thay Đổi Mật Khẩu</h2>
+      <p className="text-2xl !font-bold text-cyan-500 mb-6">Thay Đổi Mật Khẩu</p>
       <div className="space-y-5">
         {[
           { label: "Mật khẩu cũ", value: oldPassword, setValue: setOldPassword, show: showOldPassword, setShow: setShowOldPassword, error: error.oldPassword },

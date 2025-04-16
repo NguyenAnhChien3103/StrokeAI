@@ -3,13 +3,8 @@ import Image from "next/image";
 import { Button } from "react-bootstrap";
 import { motion } from "framer-motion";
 import { Calendar } from "lucide-react";
-import { useState } from "react";
-import Login from "./components/login";
-import Register from "./components/register";
 
 export default function Home() {
-  const [showModalLogin, setShowModalLogin] = useState(false);
-  const [showModalRegister, setShowModalRegister] = useState(false);
 
   const feedbacks = [
     {
@@ -34,19 +29,6 @@ export default function Home() {
 
   return (
     <>
-      <Login 
-        showModalLogin={showModalLogin}
-        setShowModalLogin={setShowModalLogin}
-        setShowModalRegister={setShowModalRegister}
-        onHide={() => setShowModalLogin(false)}
-      />
-      <Register 
-        showModalRegister={showModalRegister}
-        setShowModalRegister={setShowModalRegister}
-        setShowModalLogin={setShowModalLogin}
-        onHide={() => setShowModalRegister(false)}
-      />
-
       <div className="flex flex-col lg:flex-row items-center justify-between px-6 mt-2 lg:px-52 py-10">
         <div className="lg:w-1/2 flex flex-col items-start text-left">
           <p className="text-3xl lg:text-4xl !font-bold">
