@@ -1,23 +1,18 @@
-"use client"
+'use client'
+
 import { useEffect, useState } from 'react'
 import { Container } from 'react-bootstrap'
 import Image from 'next/image'
+import { Button } from 'react-bootstrap';
 
-const users = [
-  { name: 'Olivia Martin', email: 'm@example.com', avatar: '/avatar1.png', permission: 'Can edit' },
-  { name: 'Isabella Nguyen', email: 'b@example.com', avatar: '/avatar2.png', permission: 'Can view' },
-  { name: 'Sofia Davis', email: 'p@example.com', avatar: '/avatar3.png', permission: 'Can view' }
-]
-
-const permissions = ['Can view', 'Can edit']
 
 export default function ShareDocument() {
-  const [userPermissions, setUserPermissions] = useState(users)
   const [invitationCode, setInvitationCode] = useState('')
   const [createMessage, setCreateMessage] = useState('')
   const [inputCode, setInputCode] = useState('')
   const [joinMessage, setJoinMessage] = useState('')
   const [token, setToken] = useState<string | null>(null)
+  const [relationships, setRelationships] = useState([])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -30,9 +25,17 @@ export default function ShareDocument() {
   }, [])
 
   useEffect(() => {
+    if (!token) return
+
     const fetchInvitationCode = async () => {
       try {
-        const res = await fetch('http://localhost:5062/api/Invition/create-invitation', {
+        const storedUser = sessionStorage.getItem('user')
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null
+        const userId = parsedUser?.userId
+
+        if (!userId) return
+
+        const res = await fetch(`http://localhost:5062/api/Invition/create-invitation?userId=${userId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -41,7 +44,6 @@ export default function ShareDocument() {
         })
 
         const data = await res.json()
-
         if (res.ok) {
           setInvitationCode(data.code)
           setCreateMessage(data.message || 'Mã mời đã được tạo thành công.')
@@ -49,62 +51,102 @@ export default function ShareDocument() {
           setCreateMessage(data.message || 'Không thể tạo mã mời.')
         }
       } catch (err) {
-        console.error('Lỗi khi tạo mã mời:', err);
-        setCreateMessage('Lỗi máy chủ.');
+        console.error('Lỗi khi tạo mã mời:', err)
+        setCreateMessage('Lỗi máy chủ.')
       }
     }
 
-    if (token) {
-      fetchInvitationCode()
+    const fetchRelationships = async () => {
+      try {
+        const storedUser = sessionStorage.getItem('user')
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null
+        const userId = parsedUser?.userId
+
+        const res = await fetch(`http://localhost:5062/api/Invition/get-relationship?userId=${userId}`, {
+          headers: {
+            Authorization: `Bearer ${parsedUser?.token}`
+          }
+        })
+
+        const data = await res.json()
+        if (res.ok) {
+          setRelationships(data)
+        } else {
+          console.error(data.message || 'Không thể lấy danh sách người thân.')
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách người thân:', error)
+      }
     }
+
+    fetchInvitationCode()
+    fetchRelationships()
   }, [token])
 
-  const handlePermissionChange = (index: number, newPermission: string) => {
-    const updated = [...userPermissions]
-    updated[index].permission = newPermission
-    setUserPermissions(updated)
-  }
-
   const handleJoinWithCode = async () => {
-    if (!inputCode) return;
-  
+    if (!inputCode) return
+
     try {
+      const storedUser = sessionStorage.getItem('user')
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null
+      const userId = parsedUser?.userId
+
       const res = await fetch('http://localhost:5062/api/Invition/use-invitation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${parsedUser?.token}`
         },
-        body: JSON.stringify({ code: inputCode })
-      });
-  
-      const contentType = res.headers.get('content-type');
-  
+        body: JSON.stringify({ code: inputCode, userId })
+      })
+
+      const contentType = res.headers.get('content-type')
+
       if (contentType && contentType.includes('application/json')) {
-        const data = await res.json();
-        if (res.ok) {
-          setJoinMessage(data.message || 'Đã tham gia chia sẻ thành công.');
-        } else {
-          setJoinMessage(data.message || 'Không thể tham gia bằng mã mời này.');
-        }
+        const data = await res.json()
+        setJoinMessage(data.message || (res.ok ? 'Đã tham gia chia sẻ thành công.' : 'Không thể tham gia bằng mã mời này.'))
       } else {
-        const text = await res.text();
-        setJoinMessage(text);
+        const text = await res.text()
+        setJoinMessage(text)
       }
     } catch (err) {
-      console.error('Error:', err);
-      setJoinMessage('Lỗi khi tham gia chia sẻ.');
+      console.error('Error:', err)
+      setJoinMessage('Lỗi khi tham gia chia sẻ.')
     }
-  };
-  
-  
+  }
+
+  const handleDelete = async (id: number) => {
+    try {
+      const storedUser = sessionStorage.getItem('user')
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null
+
+      const res = await fetch(`http://localhost:5062/api/Invition/delete-relationship/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${parsedUser?.token}`
+        }
+      })
+
+      const data = await res.text()
+
+      if (res.ok) {
+        alert('Đã xóa người thân thành công.')
+        const newList = relationships.filter((r: { relationshipId: string | number }) => r.relationshipId !== id);
+        setRelationships(newList)
+      } else {
+        alert(data || 'Không thể xóa người thân.')
+      }
+    } catch (err) {
+      console.error('Lỗi khi xóa người thân:', err)
+      alert('Lỗi máy chủ.')
+    }
+  }
+
   return (
-    <Container className='max-w-lg mx-auto !px-20 py-5'>
+    <Container className="max-w-lg mx-auto !px-20 py-5">
       <div>
         <p className="text-2xl !font-bold text-cyan-500 mb-6">Chia sẻ thông tin với người thân</p>
-        <p className="text-sm text-gray-500">
-          Bất kỳ ai có liên kết đều có thể xem thông tin về bệnh án này
-        </p>
+        <p className="text-sm text-gray-500">Bất kỳ ai có liên kết đều có thể xem thông tin về bệnh án này</p>
 
         <div className="flex flex-col space-y-2">
           <label className="text-sm text-gray-700">Mã mời của bạn:</label>
@@ -127,7 +169,7 @@ export default function ShareDocument() {
           )}
         </div>
 
-        <div>
+        <div className="pb-5 mt-4">
           <label className="text-sm text-gray-700 mb-1 block">Nhập mã mời của người khác:</label>
           <div className="flex gap-2">
             <input
@@ -150,34 +192,37 @@ export default function ShareDocument() {
         </div>
 
         <div className="border-t pt-4 space-y-4">
-          {userPermissions.map((user, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Image
-                  src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
-                  alt="Avatar"
-                  width={40}
-                  height={40}
-                  className="rounded-full"
-                />
-                <div>
-                  <div className="font-medium">{user.name}</div>
-                  <div className="text-sm text-gray-500">{user.email}</div>
-                </div>
-              </div>
-              <select
-                value={user.permission}
-                onChange={(e) => handlePermissionChange(index, e.target.value)}
-                className="border rounded px-2 py-1 text-sm"
-              >
-                {permissions.map((perm) => (
-                  <option key={perm} value={perm}>
-                    {perm}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
+          <p className="text-lg font-semibold text-gray-700">Danh sách người thân đã chia sẻ:</p>
+
+          {relationships.length === 0 ? (
+  <p className="text-sm text-gray-500">Hiện chưa có người thân nào.</p>
+) : (
+  relationships.map((relation) => (
+    <div key={relation.relationshipId} className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Image
+          src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+          alt="Avatar"
+          width={40}
+          height={40}
+          className="rounded-full"
+        />
+        <div>
+          <div className="font-medium">{relation.nameInviter || 'Chưa có tên'}</div>
+          <div className="text-sm text-gray-500">{relation.emailInviter || 'Chưa có email'}</div>
+        </div>
+      </div>
+
+      <Button
+        variant="danger"
+        onClick={() => handleDelete(relation.relationshipId)}
+      >
+        Xóa
+      </Button>
+    </div>
+  ))
+)}
+
         </div>
       </div>
     </Container>

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, LogOut, UserIcon, Lock, Users } from "lucide-react";
+import { Menu, X, LogOut, UserIcon, Lock, Users , Heart } from "lucide-react";
 import Login from "./login";
 import Register from "./register";
 import { Button } from "react-bootstrap";
@@ -78,6 +78,10 @@ const Header = () => {
   const handleInviteFamily = () => {
      router.push("/invite");
   };
+
+  const handleHealthStats = () => {
+    router.push("/dashboard");
+  }
   
 
   const handleChangePassword = () => {
@@ -142,7 +146,7 @@ const Header = () => {
             <Link
               key={item.href}
               href={item.href}
-              className={`text-black !no-underline ${
+              className={`text-black !no-underline font-bold ${
                 pathname === item.href ? "font-semibold !text-cyan-500" : ""
               }`}
             >
@@ -185,6 +189,14 @@ const Header = () => {
                  <Users size={18} className="mr-2" />
                   Mời người nhà
                   </button>
+                   
+                  <button
+               className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
+                onClick={handleHealthStats} 
+                >
+                <Heart size={18} className="mr-2" /> 
+                 Chỉ số sức khỏe
+                 </button>
 
                   <button
                       className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"

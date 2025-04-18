@@ -2,10 +2,10 @@
 import React from 'react';
 import { TrendingUp } from "lucide-react"
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart ,  Tooltip as RechartsTooltip,  } from "recharts"
-import { CartesianGrid, LabelList, Line, LineChart, XAxis , YAxis , ResponsiveContainer , } from "recharts"
+import { CartesianGrid, XAxis , ResponsiveContainer , } from "recharts"
 import { Container } from 'react-bootstrap';
 import { Bar, BarChart } from "recharts"
-
+import { Label, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts"
 
 import {
   Card,
@@ -38,6 +38,8 @@ const rawData = [
   { metric: "PH", rawValue: 7.0 },
 ];
 
+const radiusChartData = [{ safe: 65, risk: 35 }];
+
 function normalizeData() {
   return rawData.map(({ metric, rawValue }) => {
     const threshold = thresholds[metric as keyof typeof thresholds];
@@ -68,7 +70,6 @@ function normalizeData() {
 
 console.log(normalizeData());
 
-
 type DotProps = {
   cx?: number;
   cy?: number;
@@ -81,31 +82,6 @@ type DotProps = {
   value?: number;
   index?: number;
 };
-
-const lineChartData = [
-  { time: "00:00", desktop: 12, mobile: 5 },
-  { time: "02:00", desktop: 18, mobile: 8 },
-  { time: "04:00", desktop: 9, mobile: 4 },
-  { time: "06:00", desktop: 23, mobile: 12 },
-  { time: "08:00", desktop: 45, mobile: 30 },
-  { time: "10:00", desktop: 50, mobile: 35 },
-  { time: "12:00", desktop: 60, mobile: 40 },
-  { time: "14:00", desktop: 55, mobile: 38 },
-  { time: "16:00", desktop: 48, mobile: 25 },
-  { time: "18:00", desktop: 70, mobile: 45 },
-  { time: "20:00", desktop: 40, mobile: 28 },
-  { time: "22:00", desktop: 30, mobile: 18 },
-];
-
-const mutilpleLineChartData = [
-  { time: "00:00", heartRate: 76, oxygen: 97, temperature: 36.5, respiratoryRate: 18, bloodPressure: 118 },
-  { time: "04:00", heartRate: 74, oxygen: 98, temperature: 36.4, respiratoryRate: 17, bloodPressure: 117 },
-  { time: "08:00", heartRate: 79, oxygen: 96, temperature: 36.6, respiratoryRate: 18, bloodPressure: 120 },
-  { time: "12:00", heartRate: 84, oxygen: 95, temperature: 37.0, respiratoryRate: 20, bloodPressure: 125 },
-  { time: "16:00", heartRate: 81, oxygen: 97, temperature: 36.8, respiratoryRate: 19, bloodPressure: 121 },
-  { time: "20:00", heartRate: 77, oxygen: 98, temperature: 36.6, respiratoryRate: 17, bloodPressure: 119 },
-];
-
 
 
 
@@ -120,6 +96,14 @@ const barChartData = [
 
 
 const chartConfig = {
+  safe: {
+    label: "An toàn",
+    color: "hsl(var(--green-500))",
+  },
+  risk: {
+    label: "Nguy cơ đột quỵ",
+    color: "hsl(var(--red-500))",
+  },
   desktop: {
     label: "Desktop",
     color: "hsl(var(--chart-1))",
@@ -134,6 +118,9 @@ const chartConfig = {
 
 export default function Dashboard() {
   const radarChartData = normalizeData(); 
+  const safe = radiusChartData[0].safe;
+  const risk = radiusChartData[0].risk;
+  
   return (
    <>
    <Container className='h-full'>
@@ -209,17 +196,141 @@ export default function Dashboard() {
         </ResponsiveContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Health status analysis <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Data visualization by metric level
-        </div>
       </CardFooter>
     </Card>
       </div>
       <div className="w-[60%] h-full">
-      <Card>
+     
+      <Card className="flex flex-col">
+  <CardHeader className="items-center pb-0">
+    <CardTitle>Tình trạng sức khỏe</CardTitle>
+    <CardDescription>Theo phần trăm tổng thể</CardDescription>
+  </CardHeader>
+  <CardContent className="flex flex-1 items-center pb-0">
+    <ChartContainer
+      config={chartConfig}
+      className="mx-auto aspect-square w-full max-w-[400px]"
+    >
+      <RadialBarChart
+        data={radiusChartData}
+        innerRadius={80}
+        outerRadius={130}
+        startAngle={90}
+        endAngle={-270}
+      >
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent hideLabel />}
+        />
+        <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
+          <Label
+            content={({ viewBox }) => {
+              if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) return null;
+
+              const { cx, cy } = viewBox;
+              const outerRadius = 130;
+              const offset = 30;
+
+              const totalPercent = safe + risk;
+              const angleSafeStart = 90;
+              const angleSafe = (safe / totalPercent) * 360;
+              const angleRisk = (risk / totalPercent) * 360;
+
+              const angleSafeMid = angleSafeStart - angleSafe / 2;
+              const angleRiskMid = angleSafeStart - angleSafe - angleRisk / 2;
+
+              const polarToCartesian = (cx, cy, r, angle) => {
+                const rad = (Math.PI / 180) * angle;
+                return {
+                  x: cx + r * Math.cos(rad),
+                  y: cy - r * Math.sin(rad),
+                };
+              };
+
+              const labelSafe = polarToCartesian(cx, cy, outerRadius + offset, angleSafeMid);
+              const labelRisk = polarToCartesian(cx, cy, outerRadius + offset, angleRiskMid);
+
+              return (
+                <>
+                  <text x={cx} y={cy} textAnchor="middle">
+                    <tspan
+                      x={cx}
+                      y={cy - 16}
+                      className="fill-foreground text-2xl font-bold"
+                    >
+                      {totalPercent}%
+                    </tspan>
+                    <tspan
+                      x={cx}
+                      y={cy + 4}
+                      className="fill-muted-foreground"
+                    >
+                      Tổng cộng
+                    </tspan>
+                  </text>
+
+                  <foreignObject
+                    x={labelSafe.x - 60}
+                    y={labelSafe.y - 10}
+                    width={120}
+                    height={40}
+                  >
+                    <div
+                      className="rounded-md border border-green-500 bg-white/40 backdrop-blur-sm px-2 py-1 text-xs text-green-700 shadow"
+                    >
+                      An toàn ({safe}%)
+                    </div>
+                  </foreignObject>
+
+                  <foreignObject
+                    x={labelRisk.x - 60}
+                    y={labelRisk.y - 10}
+                    width={120}
+                    height={40}
+                  >
+                    <div
+                      className="rounded-md border border-red-500 bg-white/40 backdrop-blur-sm px-2 py-1 text-xs text-red-700 shadow"
+                    >
+                      Nguy cơ ({risk}%)
+                    </div>
+                  </foreignObject>
+                </>
+              );
+            }}
+          />
+        </PolarRadiusAxis>
+
+        <RadialBar
+          dataKey="safe"
+          stackId="a"
+          cornerRadius={0}
+          fill="#22c55e"
+          className="stroke-transparent stroke-2"
+        />
+        <RadialBar
+          dataKey="risk"
+          stackId="a"
+          cornerRadius={0}
+          fill="#ef4444"
+          className="stroke-transparent stroke-2"
+        />
+      </RadialBarChart>
+    </ChartContainer>
+  </CardContent>
+  <CardFooter className="flex-col gap-2 text-sm">
+    <div className="flex items-center gap-2 font-medium leading-none">
+      Cập nhật mới nhất <TrendingUp className="h-4 w-4" />
+    </div>
+    <div className="leading-none text-muted-foreground">
+      Dữ liệu được tính theo tỷ lệ phần trăm (360°)
+    </div>
+  </CardFooter>
+</Card>
+
+      </div>
+    </div>
+    <div>
+    <Card>
       <CardHeader>
         <CardTitle>Bar Chart - Multiple</CardTitle>
         <CardDescription>January - June 2024</CardDescription>
@@ -250,240 +361,6 @@ export default function Dashboard() {
         </div>
         <div className="leading-none text-muted-foreground">
           Showing total visitors for the last 6 months
-        </div>
-      </CardFooter>
-    </Card>
-      </div>
-    </div>
-    <div className='h-full w-full'>
-    <Card >
-      <CardHeader>
-        <CardTitle>Line Chart - Label</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <LineChart
-            accessibilityLayer
-            data={lineChartData}
-            margin={{
-              top: 20,
-              left: 12,
-              right: 12,
-            }}
-          >
-            <CartesianGrid vertical={false} />
-
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={10}
-              tickFormatter={(value) => `${value}`} 
-            />
-            <XAxis
-              dataKey="time"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
-            />
-            <Line
-              dataKey="desktop"
-              type="natural"
-              stroke="var(--color-desktop)"
-              strokeWidth={2}
-              dot={{
-                fill: "var(--color-desktop)",
-              }}
-              activeDot={{
-                r: 6,
-              }}
-            >
-              <LabelList
-                position="top"
-                offset={12}
-                className="fill-foreground"
-                fontSize={12}
-              />
-            </Line>
-          </LineChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
-        </div>
-      </CardFooter>
-    </Card>
-
-    <Card>
-  <CardHeader>
-    <CardTitle>Line Chart - Label</CardTitle>
-    <CardDescription>January - June 2024</CardDescription>
-  </CardHeader>
-
-  <CardContent>
-    <ChartContainer config={chartConfig}>
-      <LineChart
-        accessibilityLayer
-        data={mutilpleLineChartData}
-        margin={{
-          top: 20,
-          left: 12,
-          right: 12,
-        }}
-      >
-        <CartesianGrid vertical={false} />
-        <YAxis
-  tickLine={false}
-  axisLine={false}
-  tickMargin={10}
-  ticks={[30, 60, 90, 120, 150, 180]}
-  tickFormatter={(value) => `${value}`}
-/>
-
-        <XAxis
-          dataKey="time"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-        />
-        <ChartTooltip
-          cursor={false}
-          content={<ChartTooltipContent indicator="line" />}
-        />
-
-        <Line
-          dataKey="heartRate"
-          type="natural"
-          stroke="red"
-          strokeWidth={2}
-          dot={{ fill: "red" }}
-          activeDot={{ r: 6 }}
-        >
-          <LabelList position="top" offset={12} className="fill-foreground" fontSize={12} />
-        </Line>
-
-        <Line
-          dataKey="oxygen"
-          type="natural"
-          stroke="blue"
-          strokeWidth={2}
-          dot={{ fill: "blue" }}
-          activeDot={{ r: 6 }}
-        >
-          <LabelList position="top" offset={12} className="fill-foreground" fontSize={12} />
-        </Line>
-
-        <Line
-          dataKey="temperature"
-          type="natural"
-          stroke="orange"
-          strokeWidth={2}
-          dot={{ fill: "orange" }}
-          activeDot={{ r: 6 }}
-        >
-          <LabelList position="top" offset={12} className="fill-foreground" fontSize={12} />
-        </Line>
-
-        <Line
-          dataKey="respiratoryRate"
-          type="natural"
-          stroke="green"
-          strokeWidth={2}
-          dot={{ fill: "green" }}
-          activeDot={{ r: 6 }}
-        >
-          <LabelList position="top" offset={12} className="fill-foreground" fontSize={12} />
-        </Line>
-
-        <Line
-          dataKey="bloodPressure"
-          type="natural"
-          stroke="purple"
-          strokeWidth={2}
-          dot={{ fill: "purple" }}
-          activeDot={{ r: 6 }}
-        >
-          <LabelList position="top" offset={12} className="fill-foreground" fontSize={12} />
-        </Line>
-
-      </LineChart>
-    </ChartContainer>
-  </CardContent>
-
-  <CardFooter className="flex-col items-start gap-2 text-sm">
-    <div className="flex gap-2 font-medium leading-none">
-      Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-    </div>
-    <div className="leading-none text-muted-foreground">
-      Showing total visitors for the last 6 months
-    </div>
-  </CardFooter>
-</Card>
-
-    <Card>
-      <CardHeader>
-        <CardTitle>Line Chart - Multiple</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <LineChart
-            accessibilityLayer
-            data={lineChartData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={10}
-              tickFormatter={(value) => `${value}`} 
-            />
-            <XAxis
-              dataKey="time"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <Line
-              dataKey="desktop"
-              type="monotone"
-              stroke="var(--color-desktop)"
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              dataKey="mobile"
-              type="monotone"
-              stroke="var(--color-mobile)"
-              strokeWidth={2}
-              dot={false}
-            />
-          </LineChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 font-medium leading-none">
-              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              Showing total visitors for the last 6 months
-            </div>
-          </div>
         </div>
       </CardFooter>
     </Card>

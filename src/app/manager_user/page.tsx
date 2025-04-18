@@ -43,13 +43,6 @@ export default function UserManagement() {
     }
   }, []);
 
-  useEffect(() => { 
-    const data = sessionStorage.getItem("user");
-    if (data == null) {
-      window.location.href = "/404"; 
-    }
-  }, []);
-
     const fetcher = (url: string) => {
       if (!token) return Promise.reject(new Error("Token chưa sẵn sàng"));
       return fetch(url, {
