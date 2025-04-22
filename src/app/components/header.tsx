@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, LogOut, UserIcon, Lock, Users , Heart } from "lucide-react";
+import { Menu, X, LogOut, UserIcon, Lock, Users , Heart , Smartphone } from "lucide-react";
 import Login from "./login";
 import Register from "./register";
 import { Button } from "react-bootstrap";
@@ -23,6 +23,7 @@ const Header = () => {
   const [emailForReset, setEmailForReset] = useState("");
   const [showModalResetPasswordOTP, setShowModalResetPasswordOTP] = useState(false);
   const [showModalForgotPassword, setShowModalForgotPassword] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   interface User {
     id: string;
@@ -47,6 +48,10 @@ const Header = () => {
     router.push("/profile_information");
   };
 
+  const handleManageDevices = () => {
+    router.push("/devices");
+  }
+
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user"); 
     if (storedUser) {
@@ -68,8 +73,8 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
     sessionStorage.removeItem("user");
+    sessionStorage.removeItem("devices");
     setUser(null);
     setShowDropdown(false);
     router.push("/");
@@ -91,6 +96,18 @@ const Header = () => {
   const handleManageUsers = () => {
     router.push('/manager_user');
   };
+
+  useEffect(() => {
+    const userSession = sessionStorage.getItem("user");
+    if (userSession) {
+      try {
+        const user = JSON.parse(userSession);
+        setIsAdmin(user.roles.includes("admin"));
+      } catch (error) {
+        console.error("Lỗi parse session:", error);
+      }
+    }
+  }, []);
 
   return (
     <>
@@ -175,13 +192,23 @@ const Header = () => {
                     <UserIcon size={18} className="mr-2" />
                     Thông tin cá nhân
                   </button>
-                  <button
+                  {isAdmin && (
+                 <button
                    className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
-                   onClick={handleManageUsers}
-                  >
+                  onClick={handleManageUsers}
+                    >
                   <Users size={18} className="mr-2" />
-                     Quản lý người dùng
+                  Quản lý người dùng
+                   </button>
+                      )}
+                 <button
+                   className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
+                   onClick={handleManageDevices}
+                  >
+                  <Smartphone size={18} className="mr-2" /> 
+                 Quản lý thiết bị
                  </button>
+
                  <button
                   className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
                   onClick={handleInviteFamily} 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Container } from 'react-bootstrap'
 import Image from 'next/image'
 import { Button } from 'react-bootstrap';
+import { useRouter } from 'next/navigation';
 
 
 export default function ShareDocument() {
@@ -13,7 +14,13 @@ export default function ShareDocument() {
   const [joinMessage, setJoinMessage] = useState('')
   const [token, setToken] = useState<string | null>(null)
   const [relationships, setRelationships] = useState([])
+  const router = useRouter()
 
+  const handleViewDetails = (id: string) => {
+    router.push(`/map?id=${id}`);
+  }
+  
+  
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedUser = sessionStorage.getItem('user')
@@ -212,16 +219,25 @@ export default function ShareDocument() {
           <div className="text-sm text-gray-500">{relation.emailInviter || 'Chưa có email'}</div>
         </div>
       </div>
-
-      <Button
-        variant="danger"
-        onClick={() => handleDelete(relation.relationshipId)}
-      >
-        Xóa
-      </Button>
+  
+      <div className="col-span-3 flex gap-2">
+        <Button
+          variant="info"
+          className='text-white'
+          onClick={() => handleViewDetails(relation.inviterId)}
+        >
+          Xem vị trí
+        </Button>
+        <Button
+          variant="danger"
+          onClick={() => handleDelete(relation.relationshipId)}
+        >
+          Xóa
+        </Button>
+      </div>
     </div>
-  ))
-)}
+  )))
+}
 
         </div>
       </div>

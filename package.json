@@ -32,6 +32,7 @@
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.5.0",
     "recharts": "^2.15.1",
+    "remove-diacritics": "^0.1.1",
     "shadcn-ui": "^0.9.5",
     "swr": "^2.3.3",
     "tailwind-merge": "^3.0.2",

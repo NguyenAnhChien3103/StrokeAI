@@ -2,10 +2,12 @@
 import React from 'react';
 import { TrendingUp } from "lucide-react"
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart ,  Tooltip as RechartsTooltip,  } from "recharts"
-import { CartesianGrid, XAxis , ResponsiveContainer , } from "recharts"
+import { CartesianGrid, XAxis, YAxis , ResponsiveContainer , } from "recharts"
 import { Container } from 'react-bootstrap';
 import { Bar, BarChart } from "recharts"
 import { Label, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts"
+import { useEffect, useState } from "react";
+import { format, subDays } from 'date-fns';
 
 import {
   Card,
@@ -83,18 +85,6 @@ type DotProps = {
   index?: number;
 };
 
-
-
-const barChartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-]
-
-
 const chartConfig = {
   safe: {
     label: "An toàn",
@@ -117,19 +107,205 @@ const chartConfig = {
 
 
 export default function Dashboard() {
-  const radarChartData = normalizeData(); 
   const safe = radiusChartData[0].safe;
   const risk = radiusChartData[0].risk;
+  const [token, setToken] = useState("");
+  const [userId, setUserId] = useState<number | null>(null);
+  const [devices, setDevices] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [radarChartData, setRadarChartData] = useState<any[]>([]);
+  const [barChartData, setBarChartData] = useState<any[]>([]);
+  const today = new Date()
+
+
+  const last14Days: { label: string; date: Date }[] = Array.from({ length: 14 }, (_, i) => {
+    const day = subDays(today, i);
+    const label = format(day, "dd/MM/yyyy");
+    const labelText = format(day, "yyyy-MM-dd") === format(today, "yyyy-MM-dd") ? "Hôm nay" : label;
+    return { label: labelText, date: day };
+  });
   
+
+  const extraButtons = [
+    { label: "14 ngày" },
+    { label: "sáng 14 ngày" },
+    { label: "đêm 14 ngày" },
+  ];
+
+  useEffect(() => {
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setToken(parsedUser.token);
+      setUserId(parsedUser.userId);
+    }
+  }, []);
+ 
+  useEffect(() => {
+    const fetchDevices = async () => {
+      if (!token || !userId) return;
+      try {
+        const response = await fetch(`http://localhost:5062/api/Devices/get-devices/${userId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Không thể lấy thiết bị");
+        }
+
+        const data = await response.json();
+        setDevices(data);
+        sessionStorage.setItem("devices", JSON.stringify(data));
+        console.log("Thiết bị:", data);
+      } catch (error) {
+        console.error("Lỗi khi gọi API thiết bị:", error);
+      }
+    };
+    fetchDevices();
+  }, [token, userId]);
+
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedDevices = sessionStorage.getItem("devices");
+      if (storedDevices) {
+        const parsedDevices = JSON.parse(storedDevices);
+        setDevices(parsedDevices.deviceId); 
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedDevices = sessionStorage.getItem("devices");
+    if (storedDevices) {
+      try {
+        const parsedDevices = JSON.parse(storedDevices);
+        setDevices(parsedDevices);
+      } catch (error) {
+        console.error("Lỗi khi đọc devices từ session:", error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!token || devices.length === 0 || !selectedDate) return;
+  
+    const deviceId = devices[0]?.deviceId;
+    if (!deviceId) return;
+  
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+  
+    const fetchDataByDate = async () => {
+      try {
+        const response = await fetch(`http://localhost:5062/api/UserMedicalDatas/daily/${formattedDate}/${deviceId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            'Accept': "application/json",
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Lỗi khi gọi API: ${errorData}`);
+        }
+  
+        const textData = await response.text();
+        if (textData) {
+          const data = JSON.parse(textData);
+          setRadarChartData(data);
+        } else {
+          console.warn("Dữ liệu phản hồi trống.");
+        }
+      } catch (error) {
+        console.error("Lỗi khi fetch data theo ngày:", error);
+      }
+    };
+  
+    fetchDataByDate();
+  }, [selectedDate, devices, token]);
+
+  
+  const handleButtonClick = (date: Date) => {
+    setSelectedDate(date);
+  };
+
+  
+  interface ChartData {
+    time: string;
+    heartRate: number;
+    spo2Information: number;
+    systolicPressure: number;
+    diastolicPressure: number;
+    temperature: number;
+    bloodPh: number;
+  }
+  
+  useEffect(() => {
+    if (!radarChartData.length) return;
+    
+    const formatted: ChartData[] = radarChartData.map(item => ({
+      time: format(new Date(item.recordedAt), 'HH:mm'),
+      heartRate: item.heartRate,
+      spo2Information: item.spo2Information,
+      systolicPressure: item.systolicPressure,
+      diastolicPressure: item.diastolicPressure,
+      temperature: item.temperature,
+      bloodPh: item.bloodPh,
+    }));
+    
+    setBarChartData(formatted);
+  }, [radarChartData]);
+  
+
   return (
    <>
-   <Container className='h-full'>
+   <Container className='h-full mb-5'>
+   <div className="flex flex-col items-start gap-4 p-4">
+  <div className="mb-4">
+    <p>
+      <strong>Ngày đã chọn:</strong> 
+      {selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()) 
+        ? format(selectedDate, 'dd/MM/yyyy') 
+        : 'Chưa chọn ngày'}
+    </p>
+  </div>
+
+  <div className="flex flex-wrap gap-2">
+    {last14Days.map((item, index) => (
+      <button
+        key={index}
+        onClick={() => handleButtonClick(item.date)}
+        className={`bg-cyan-500 hover:bg-cyan-600 text-black px-4 py-2 rounded 
+          ${selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()) && format(selectedDate, 'yyyy-MM-dd') === format(item.date, 'yyyy-MM-dd') ? 'border-4 border-green-700' : ''}`}
+      >
+        {item.label}
+      </button>
+    ))}
+
+{extraButtons.map((item, index) => (
+  <button
+    key={`extra-${index}`}
+    onClick={() => handleButtonClick(today)}
+    className="bg-cyan-500 hover:bg-cyan-600 text-black px-4 py-2 rounded"
+  >
+    {item.label}
+  </button>
+))}
+  </div>
+</div>
    <div className='flex gap-2 h-full'>
    <div className="w-[40%] h-full">
    <Card className="h-full">
       <CardHeader className="items-center">
-        <CardTitle>Radar Chart - Health Metrics</CardTitle>
-        <CardDescription>Monitoring health indicators</CardDescription>
+        <CardTitle>Biều đồ Char Data</CardTitle>
+        <CardDescription>Hiển thị các chỉ số sức khỏe quan trọng về đột quỵ</CardDescription>
       </CardHeader>
       <CardContent className="pb-0">
         <ResponsiveContainer width="100%" height={300}>
@@ -204,7 +380,7 @@ export default function Dashboard() {
       <Card className="flex flex-col">
   <CardHeader className="items-center pb-0">
     <CardTitle>Tình trạng sức khỏe</CardTitle>
-    <CardDescription>Theo phần trăm tổng thể</CardDescription>
+    <CardDescription>Theo phần trăm nguy cơ</CardDescription>
   </CardHeader>
   <CardContent className="flex flex-1 items-center pb-0">
     <ChartContainer
@@ -330,40 +506,280 @@ export default function Dashboard() {
       </div>
     </div>
     <div>
-    <Card>
-      <CardHeader>
-        <CardTitle>Bar Chart - Multiple</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={barChartData}>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="month"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="dashed" />}
-            />
-            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-            <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
-        </div>
-      </CardFooter>
-    </Card>
+
+    <div className="flex flex-wrap gap-4">
+  <div className="w-full md:w-[48%]">
+  <Card>
+  <CardHeader>
+    <CardTitle>Biểu đồ nhịp tim, dữ liệu được hiển thị theo đơn vị bpm :</CardTitle>
+    <CardDescription>
+      Thời gian thống kê : {format(new Date(), 'dd/MM/yyyy')}
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={barChartData}>
+        <CartesianGrid vertical={false} />
+        
+        <XAxis
+  dataKey="time"
+  tickLine={false}
+  tickMargin={10}
+  axisLine={false}
+  tickFormatter={(value) => {
+    try {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? '' : format(date, 'HH:mm');
+    } catch  {
+      console.error("Lỗi khi định dạng trục X:", value);
+      return '';
+    }
+  }}
+/>
+
+        <YAxis 
+          domain={['auto', 'auto']} 
+          tickFormatter={(value) => `${value} BPM`}  
+        />
+
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent />}
+        />
+        
+        <Bar dataKey="heartRate" name="bpm" fill="var(--color-desktop)" radius={4} />
+      </BarChart>
+    </ChartContainer>
+  </CardContent>
+</Card>
+  </div>
+  <div className="w-full md:w-[48%]">
+  <Card>
+  <CardHeader>
+    <CardTitle>Độ bão hòa Oxi trong máu, dữ liệu được hiển thị theo đơn vị % :</CardTitle>
+    <CardDescription>
+      Thời gian thống kê : {format(new Date(), 'dd/MM/yyyy')}
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={barChartData}>
+        <CartesianGrid vertical={false} />
+        
+        <XAxis
+  dataKey="time"
+  tickLine={false}
+  tickMargin={10}
+  axisLine={false}
+  tickFormatter={(value) => {
+    try {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? '' : format(date, 'HH:mm');
+    } catch  {
+      console.error("Lỗi khi định dạng trục X:", value);
+      return '';
+    }
+  }}
+/>
+
+        <YAxis 
+          domain={['auto', 'auto']} 
+          tickFormatter={(value) => `${value} %`}  
+        />
+
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent />}
+        />
+        
+        <Bar dataKey="spo2Information" name="%" fill="var(--color-desktop)" radius={4} />
+      </BarChart>
+    </ChartContainer>
+  </CardContent>
+</Card> 
+  </div>
+  <div className="w-full md:w-[48%]">
+  <Card>
+  <CardHeader>
+    <CardTitle>Biểu đồ huyết áp tâm thu , dữ liệu được hiển thị theo đơn vị mmHg :</CardTitle>
+    <CardDescription>
+      Thời gian thống kê : {format(new Date(), 'dd/MM/yyyy')}
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={barChartData}>
+        <CartesianGrid vertical={false} />
+        
+        <XAxis
+  dataKey="time"
+  tickLine={false}
+  tickMargin={10}
+  axisLine={false}
+  tickFormatter={(value) => {
+    try {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? '' : format(date, 'HH:mm');
+    } catch  {
+      console.error("Lỗi khi định dạng trục X:", value);
+      return '';
+    }
+  }}
+/>
+
+        <YAxis 
+          domain={['auto', 'auto']} 
+          tickFormatter={(value) => `${value} mmHg`}  
+        />
+
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent />}
+        />
+        
+        <Bar dataKey="systolicPressure" name="mmHg" fill="var(--color-desktop)" radius={4} />
+      </BarChart>
+    </ChartContainer>
+  </CardContent>
+</Card>
+  </div>
+  <div className="w-full md:w-[48%]">
+  <Card>
+  <CardHeader>
+    <CardTitle>Biểu đồ áp suất tâm trương , dữ liệu được hiển thị theo đơn vị mmHg :</CardTitle>
+    <CardDescription>
+      Thời gian thống kê : {format(new Date(), 'dd/MM/yyyy')}
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={barChartData}>
+        <CartesianGrid vertical={false} />
+        
+        <XAxis
+  dataKey="time"
+  tickLine={false}
+  tickMargin={10}
+  axisLine={false}
+  tickFormatter={(value) => {
+    try {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? '' : format(date, 'HH:mm');
+    } catch  {
+      console.error("Lỗi khi định dạng trục X:", value);
+      return '';
+    }
+  }}
+/>
+
+        <YAxis 
+          domain={['auto', 'auto']} 
+          tickFormatter={(value) => `${value} mmHg`}  
+        />
+
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent />}
+        />
+        
+        <Bar dataKey="diastolicPressure" name="mmHg" fill="var(--color-desktop)" radius={4} />
+      </BarChart>
+    </ChartContainer>
+  </CardContent>
+</Card>
+  </div>
+  <div className="w-full md:w-[48%]">
+  <Card>
+  <CardHeader>
+    <CardTitle>Biểu đồ hiển thị nhiệt độ , dữ liệu được hiển thị theo đơn vị °C :</CardTitle>
+    <CardDescription>
+      Thời gian thống kê : {format(new Date(), 'dd/MM/yyyy')}
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={barChartData}>
+        <CartesianGrid vertical={false} />
+        
+        <XAxis
+  dataKey="time"
+  tickLine={false}
+  tickMargin={10}
+  axisLine={false}
+  tickFormatter={(value) => {
+    try {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? '' : format(date, 'HH:mm');
+    } catch  {
+      console.error("Lỗi khi định dạng trục X:", value);
+      return '';
+    }
+  }}
+/>
+
+        <YAxis 
+          domain={['auto', 'auto']} 
+          tickFormatter={(value) => `${value} °C`}  
+        />
+
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent />}
+        />
+        
+        <Bar dataKey="temperature" name="°C" fill="var(--color-desktop)" radius={4} />
+      </BarChart>
+    </ChartContainer>
+  </CardContent>
+</Card>
+  </div>
+  <div className="w-full md:w-[48%]">
+  <Card>
+  <CardHeader>
+    <CardTitle>Biểu đồ hiển thị PH trong máu , dữ liệu được hiển thị theo đơn vị pH :</CardTitle>
+    <CardDescription>
+       Thời gian thống kê : {format(new Date(), 'dd/MM/yyyy')}
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={barChartData}>
+        <CartesianGrid vertical={false} />
+        
+        <XAxis
+  dataKey="time"
+  tickLine={false}
+  tickMargin={10}
+  axisLine={false}
+  tickFormatter={(value) => {
+    try {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? '' : format(date, 'HH:mm');
+    } catch  {
+      console.error("Lỗi khi định dạng trục X:", value);
+      return '';
+    }
+  }}
+/>
+
+        <YAxis 
+          domain={['auto', 'auto']} 
+          tickFormatter={(value) => `${value} pH`}  
+        />
+
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent />}
+        />
+        
+        <Bar dataKey="bloodPh" name="pH" fill="var(--color-desktop)" radius={4} />
+      </BarChart>
+    </ChartContainer>
+  </CardContent>
+</Card>
+  </div>
+</div>
+
     </div>
    </Container>
    </>
