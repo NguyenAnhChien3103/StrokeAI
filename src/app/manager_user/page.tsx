@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import Button from "react-bootstrap/Button";
+import API_ENDPOINTS from "../utils/apiConfig";
 
 
 interface User {
@@ -63,7 +64,7 @@ export default function UserManagement() {
     
 
     const { data: users, error, isLoading } = useSWR<User[]>(
-      token ? "http://localhost:5062/api/admin/users" : null,
+      token ? API_ENDPOINTS.getUsers : null,
       token ? fetcher : null,
       {
         revalidateIfStale: false,
@@ -72,7 +73,6 @@ export default function UserManagement() {
       }
     );
     
-  // Lọc và tìm kiếm dữ liệu
   const filteredUsers = users?.filter(user => {
     const searchTermNoAccent = removeAccents(searchTerm.toLowerCase());
     const matchesSearch = searchTerm === "" || 
@@ -92,7 +92,7 @@ export default function UserManagement() {
 
   const handleAddAdmin = async (userId: string) => {
     try {
-      const response = await fetch(`http://localhost:5062/api/admin/add-admin-role/${userId}`, {
+      const response = await fetch(API_ENDPOINTS.addAdminRole(userId), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -117,7 +117,7 @@ export default function UserManagement() {
 
   const handleRemoveAdmin = async (userId: string) => {
     try {
-      const response = await fetch(`http://localhost:5062/api/admin/remove-admin/${userId}`, {
+      const response = await fetch(API_ENDPOINTS.removeAdmin(userId), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -145,7 +145,7 @@ export default function UserManagement() {
   const handleDeleteUser = async (userId: string) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       try {
-        const response = await fetch(`http://localhost:5062/api/admin/delete-user/${userId}`, {
+        const response = await fetch(API_ENDPOINTS.deleteUser(userId), {
           method: "DELETE",
           mode: 'cors',
           headers: {

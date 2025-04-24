@@ -2,6 +2,7 @@
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import useSWRMutation from "swr/mutation";
+import API_ENDPOINTS from "../utils/apiConfig";
 
 
 interface IVerifyOTP {
@@ -132,19 +133,19 @@ export default function VerifyOTP({
   }, [showModalVerifyOTP]);
 
   const { trigger: triggerRegister } = useSWRMutation(
-    "http://localhost:5062/api/user/verifyotp",
+    API_ENDPOINTS.verifyRegisterOtp,
     verifyRegisterOtpFetcher
   );
 
   const { trigger: triggerUpdate } = useSWRMutation(
-    "http://localhost:5062/api/Otp/verify-and-update",
+    API_ENDPOINTS.verifyUpdateOtp,
     verifyUpdateOtpFetcher
   );
 
 
   const autoLogin = async (credential: string, password: string) => {
     try {
-      const res = await fetch("http://localhost:5062/api/User/login", {
+      const res = await fetch(API_ENDPOINTS.login, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

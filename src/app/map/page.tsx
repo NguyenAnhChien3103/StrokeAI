@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
+import API_ENDPOINTS from '../utils/apiConfig'
 
 const DefaultIcon = L.icon({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -59,7 +60,7 @@ export default function MapPage() {
 
     const fetchData = async () => {
       try {
-        const response = await fetch(`http://localhost:5062/api/User/user_gps?userId=${inviterId}`)
+        const response = await fetch(API_ENDPOINTS.getUserGps(inviterId))
         if (!response.ok) throw new Error('Không tìm thấy vị trí người dùng')
         const data: GpsData = await response.json()
         setGpsData(data)

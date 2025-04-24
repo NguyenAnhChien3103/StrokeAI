@@ -5,6 +5,7 @@ import Image from "next/image";
 import useSWRMutation from "swr/mutation";
 import { useRouter } from "next/navigation";
 import ForgotPassword from "./forgot_password";
+import API_ENDPOINTS from '../utils/apiConfig'; 
 
 interface ILogin {
   showModalLogin: boolean;
@@ -44,7 +45,7 @@ export default function Login({
   const [loginError, setLoginError] = useState("");
   const [showModalForgotPassword, setShowModalForgotPassword] = useState(false);
 
-  const { trigger, isMutating } = useSWRMutation("http://localhost:5062/api/User/login", fetcher);
+  const { trigger, isMutating } = useSWRMutation(API_ENDPOINTS.login, fetcher);
 
   useEffect(() => {
     if (!showModalLogin) {

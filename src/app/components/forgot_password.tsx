@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import useSWRMutation from "swr/mutation";
+import API_ENDPOINTS from "../utils/apiConfig";
 
 interface ForgotPasswordResponse {
   message: string;
@@ -51,7 +52,7 @@ export default function ForgotPassword({
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const { trigger, isMutating } = useSWRMutation<ForgotPasswordResponse, Error, string, { Email: string }>(
-    "http://localhost:5062/api/User/forgot-password",
+    API_ENDPOINTS.forgotPassword,
     forgotPasswordFetcher
   );
 

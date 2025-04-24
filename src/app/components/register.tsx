@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import useSWRMutation from "swr/mutation";
 import Link from "next/link";
+import API_ENDPOINTS from "../utils/apiConfig";
 
 interface IRegister {
   showModalRegister: boolean;
@@ -118,7 +119,7 @@ export default function Register(props: IRegister) {
   }, [showModalRegister]);
 
   const { trigger, isMutating } = useSWRMutation(
-    "http://localhost:5062/api/User/register",
+    API_ENDPOINTS.register,
     registerFetcher
   );
 

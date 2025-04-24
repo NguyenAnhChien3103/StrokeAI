@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { mutate } from "swr";
 import { Container } from "react-bootstrap";
+import API_ENDPOINTS from "../utils/apiConfig";
 
 const CreateAdminForm = () => {
   const [username, setUsername] = useState("");
@@ -74,7 +75,7 @@ const createAdmin = async () => {
 
   
   try {
-    const response = await fetch("http://localhost:5062/api/admin/create-admin", {
+    const response = await fetch(API_ENDPOINTS.createAdmin, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -110,7 +111,6 @@ const createAdmin = async () => {
     }
 
     alert("Tạo tài khoản admin thành công!");
-    // Clear form
     setUsername("");
     setPassword("");
     setPatientName("");

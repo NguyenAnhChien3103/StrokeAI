@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import useSWRMutation from "swr/mutation";
 import Image from "next/image";
+import API_ENDPOINTS from "../utils/apiConfig";
 
 const resetPasswordFetcher = async (
   url: string,
@@ -62,7 +63,7 @@ export default function ResetPasswordOTP({
   }, [showModalResetPasswordOTP]);
 
   const { trigger: triggerResetPassword } = useSWRMutation(
-    "http://localhost:5062/api/User/reset-password",
+    API_ENDPOINTS.resetPassword,
     resetPasswordFetcher
   );
 

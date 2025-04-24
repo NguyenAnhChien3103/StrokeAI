@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import API_ENDPOINTS from "../utils/apiConfig";
 
 interface ProfileEditProps {
   showModalEditProfile: boolean;
@@ -112,7 +113,7 @@ const ProfileEdit = ({ showModalEditProfile,
   
     try {
       if (hasBasicInfoChanged) {
-        const updateResponse = await fetch("http://localhost:5062/api/User/update-basic-info", {
+        const updateResponse = await fetch(API_ENDPOINTS.updateBasicInfo, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -146,7 +147,7 @@ const ProfileEdit = ({ showModalEditProfile,
         setNewEmail(hasEmailChanged ? email : "");
         setNewPhone(hasPhoneChanged ? phone : "");
   
-        const otpResponse = await fetch("http://localhost:5062/api/Otp/send-otp", {
+        const otpResponse = await fetch(API_ENDPOINTS.sendOtp, {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",

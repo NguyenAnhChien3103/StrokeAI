@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Container } from "react-bootstrap";
+import API_ENDPOINTS from "../utils/apiConfig";
 
 export default function ChangePassword() {
   const [oldPassword, setOldPassword] = useState("");
@@ -59,7 +60,7 @@ export default function ChangePassword() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5062/api/User/change-password", {
+      const response = await fetch(API_ENDPOINTS.changePassword, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

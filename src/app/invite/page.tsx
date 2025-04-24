@@ -5,6 +5,7 @@ import { Container } from 'react-bootstrap'
 import Image from 'next/image'
 import { Button } from 'react-bootstrap';
 import { useRouter } from 'next/navigation';
+import API_ENDPOINTS from '../utils/apiConfig';
 
 
 export default function ShareDocument() {
@@ -42,7 +43,7 @@ export default function ShareDocument() {
 
         if (!userId) return
 
-        const res = await fetch(`http://localhost:5062/api/Invition/create-invitation?userId=${userId}`, {
+        const res = await fetch(API_ENDPOINTS.createInvitation(userId), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -69,7 +70,7 @@ export default function ShareDocument() {
         const parsedUser = storedUser ? JSON.parse(storedUser) : null
         const userId = parsedUser?.userId
 
-        const res = await fetch(`http://localhost:5062/api/Invition/get-relationship?userId=${userId}`, {
+        const res = await fetch(API_ENDPOINTS.getRelationship(userId), {
           headers: {
             Authorization: `Bearer ${parsedUser?.token}`
           }
@@ -98,7 +99,7 @@ export default function ShareDocument() {
       const parsedUser = storedUser ? JSON.parse(storedUser) : null
       const userId = parsedUser?.userId
 
-      const res = await fetch('http://localhost:5062/api/Invition/use-invitation', {
+      const res = await fetch(API_ENDPOINTS.useInvitation, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +128,7 @@ export default function ShareDocument() {
       const storedUser = sessionStorage.getItem('user')
       const parsedUser = storedUser ? JSON.parse(storedUser) : null
 
-      const res = await fetch(`http://localhost:5062/api/Invition/delete-relationship/${id}`, {
+      const res = await fetch(API_ENDPOINTS.deleteRelationship(id), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${parsedUser?.token}`

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Modal, Form, Container, Row, Col, ListGroup, Alert } from 'react-bootstrap';
 import removeDiacritics from 'remove-diacritics';
+import API_ENDPOINTS from '../utils/apiConfig';
 
 type Device = {
   deviceId: number;
@@ -42,7 +43,7 @@ export default function DevicesPage() {
 
   const fetchDevices = async () => {
     try {
-      const res = await fetch(`http://localhost:5062/api/devices/get-devices/${userId}`);
+      const res = await fetch(API_ENDPOINTS.getDevices(userId));
       if (!res.ok) throw new Error('Không thể lấy danh sách thiết bị');
       const data = await res.json();
       setDevices(data);
@@ -60,7 +61,7 @@ export default function DevicesPage() {
     }
 
     try {
-      const res = await fetch('http://localhost:5062/api/devices/add-device', {
+      const res = await fetch(API_ENDPOINTS.addDevice, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +83,7 @@ export default function DevicesPage() {
 
   const handleDeleteDevice = async (deviceId: number) => {
     try {
-      const res = await fetch(`http://localhost:5062/api/devices/delete-device/${deviceId}`, {
+      const res = await fetch(API_ENDPOINTS.deleteDevice(deviceId), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
