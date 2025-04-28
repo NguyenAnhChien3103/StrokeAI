@@ -72,23 +72,25 @@ export default function UserManagement() {
         revalidateOnReconnect: false,
       }
     );
-    
-  const filteredUsers = users?.filter(user => {
-    const searchTermNoAccent = removeAccents(searchTerm.toLowerCase());
-    const matchesSearch = searchTerm === "" || 
-      removeAccents(user.username.toLowerCase()).includes(searchTermNoAccent) ||
-      removeAccents(user.patientName.toLowerCase()).includes(searchTermNoAccent) ||
-      user.phone.includes(searchTerm) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesGender = genderFilter === "all" || 
-      (genderFilter === "male" && Number(user.gender) === 0) ||
-      (genderFilter === "female" && Number(user.gender) === 1);
 
-      const matchesRole = roleFilter === "all" || user.roles.includes(roleFilter);
-
-      return matchesSearch && matchesGender && matchesRole;
-  });
+    const filteredUsers = Array.isArray(users)
+    ? users.filter(user => {
+        const searchTermNoAccent = removeAccents(searchTerm.toLowerCase());
+        const matchesSearch = searchTerm === "" || 
+          removeAccents(user.username.toLowerCase()).includes(searchTermNoAccent) ||
+          removeAccents(user.patientName.toLowerCase()).includes(searchTermNoAccent) ||
+          user.phone.includes(searchTerm) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  
+        const matchesGender = genderFilter === "all" || 
+          (genderFilter === "male" && Number(user.gender) === 0) ||
+          (genderFilter === "female" && Number(user.gender) === 1);
+  
+        const matchesRole = roleFilter === "all" || user.roles.includes(roleFilter);
+  
+        return matchesSearch && matchesGender && matchesRole;
+    })
+    : [];
 
   const handleAddAdmin = async (userId: string) => {
     try {

@@ -42,16 +42,23 @@ export default function DevicesPage() {
   }, [userId]);
 
   const fetchDevices = async () => {
+    if (userId === null || token === null) return;
     try {
-      const res = await fetch(API_ENDPOINTS.getDevices(userId));
+      const res = await fetch(API_ENDPOINTS.getDevices(userId), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!res.ok) throw new Error('Không thể lấy danh sách thiết bị');
       const data = await res.json();
-      setDevices(data);
-    } catch (err) {
-      console.error(err);
-      setDevices([]);
+      setDevices(data?.$values || []);
+    } catch  {
+      setErrorMsg('Không thể lấy danh sách thiết bị');
+      setDevices([]); 
     }
   };
+  
+  
 
   const handleAddDevice = async () => {
     const { deviceName, deviceType, series } = deviceForm;

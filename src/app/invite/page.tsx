@@ -66,26 +66,33 @@ export default function ShareDocument() {
 
     const fetchRelationships = async () => {
       try {
-        const storedUser = sessionStorage.getItem('user')
-        const parsedUser = storedUser ? JSON.parse(storedUser) : null
-        const userId = parsedUser?.userId
-
+        const storedUser = sessionStorage.getItem('user');
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+        const userId = parsedUser?.userId;
+    
         const res = await fetch(API_ENDPOINTS.getRelationship(userId), {
           headers: {
-            Authorization: `Bearer ${parsedUser?.token}`
-          }
-        })
-
-        const data = await res.json()
+            Authorization: `Bearer ${parsedUser?.token}`,
+          },
+        });
+    
+        const data = await res.json();
+    
         if (res.ok) {
-          setRelationships(data)
+          if (data && Array.isArray(data.$values)) {
+            setRelationships(data.$values);
+          } else {
+            setRelationships([]);
+          }
         } else {
-          console.error(data.message || 'Không thể lấy danh sách người thân.')
+          console.error(data.message || 'Không thể lấy danh sách người thân.');
         }
       } catch (error) {
-        console.error('Lỗi khi lấy danh sách người thân:', error)
+        console.error('Lỗi khi lấy danh sách người thân:', error);
       }
-    }
+    };
+    
+    
 
     fetchInvitationCode()
     fetchRelationships()

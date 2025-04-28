@@ -141,6 +141,15 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+interface AverageChartData {
+  date: string;
+  averageTemperature: number | null;
+  averageSpO2: number | null;
+  averageHeartRate: number | null;
+  averageBloodPh: number | null;
+  averageSystolicPressure: number | null;
+  averageDiastolicPressure: number | null;
+}
 
 
 export default function Dashboard() {
@@ -156,7 +165,12 @@ export default function Dashboard() {
   const [barChartData, setBarChartData] = useState<any[]>([]);
   const today = new Date()
   const [noDataMessage, setNoDataMessage] = useState("");
-
+  const [nightDayData, setNightDayData] = useState<any[]>([]);
+  const [allDayChartData, setAllDayChartData] = useState<AverageChartData[]>([]);
+  const [dayChartData, setDayChartData] = useState<AverageChartData[]>([]);
+  const [nightChartData, setNightChartData] = useState<AverageChartData[]>([]);
+  const [mode, setMode] = useState<'allDay' | 'splitDayNight'>('allDay');
+  const [isUser, setIsUser] = useState(false);
 
 
   const last14Days: { label: string; date: Date }[] = Array.from({ length: 14 }, (_, i) => {
@@ -364,16 +378,141 @@ export default function Dashboard() {
 
     const formatted = [
       { metric: "Nhịp tim", value: latest.averageSpO4 },
-      { metric: "SP02", value: latest.averageSpO2 },
+      { metric: "SP02", value: latest.averageSpO3 },
       { metric: "Huyết áp tâm thu", value: latest.averageSpO6 },
-      { metric: "Huyết áp tâm trương", value: latest.averageSpO5 },
-      { metric: "Nhiệt độ", value: latest.averageSpO3 },
-      { metric: "Độ pH máu", value: latest.averageSpO3 },
+      { metric: "Huyết áp tâm trương", value: latest.averageSpO7},
+      { metric: "Nhiệt độ", value: latest.averageSpO2 },
+      { metric: "Độ pH máu", value: latest.averageSpO5 },
     ];
 
     setRadarChartData(formatted);
   }, [averageAllDayChartData]);
 
+  
+  useEffect(() => {
+    if (!token || devices.length === 0) return;
+    const deviceId = devices[0].deviceId;
+    if (!deviceId) return;
+  
+    const fetchNightDayData = async () => {
+      try {
+        const res = await fetch(
+          API_ENDPOINTS.getAverageDailyNightLast14Days(deviceId),
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+  
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error(`API error: ${err}`);
+        }
+  
+        const data = await res.json();
+        if (!data || data.length === 0) {
+          setNightDayData([]);
+          setNoDataMessage('Không có dữ liệu trong 14 ngày gần nhất.');
+        } else {
+          setNightDayData(data);
+          setNoDataMessage('');
+        }
+      } catch (e) {
+        console.error(e);
+        setNightDayData([]);
+        setNoDataMessage('Đã xảy ra lỗi khi tải dữ liệu.');
+      }
+    };
+  
+    fetchNightDayData();
+  }, [devices, token]);
+
+  useEffect(() => {
+    if (!nightDayData.length) return;
+  
+    const transformData = (key: 'allDayAverage' | 'dailyAverage' | 'nightlyAverage') => {
+      return nightDayData.map((item: any) => {
+        const averageData = item[key];
+        return {
+          date: item.date,
+          averageTemperature: averageData?.averageTemperature ?? null,
+          averageSpO2: averageData?.averageSpO2 ?? null,
+          averageHeartRate: averageData?.averageHeartRate ?? null,
+          averageBloodPh: averageData?.averageBloodPh ?? null,
+          averageSystolicPressure: averageData?.averageSystolicPressure ?? null,
+          averageDiastolicPressure: averageData?.averageDiastolicPressure ?? null,
+        };
+      });
+    };
+    
+  
+    setAllDayChartData(transformData('allDayAverage'));
+    setDayChartData(transformData('dailyAverage'));
+    setNightChartData(transformData('nightlyAverage'));
+  }, [nightDayData]);
+  
+  const generateChartProps = () => {
+    if (mode === 'allDay') {
+      return {
+        labels: allDayChartData.map(d => d.date),
+        datasets: [
+          { label: 'Nhiệt độ (℃)', data: allDayChartData.map(d => d.averageTemperature ?? 0) },
+          { label: 'SpO₂ (%)', data: allDayChartData.map(d => d.averageSpO2 ?? 0) },
+          { label: 'Nhịp tim (bpm)', data: allDayChartData.map(d => d.averageHeartRate ?? 0) },
+          { label: 'pH máu', data: allDayChartData.map(d => d.averageBloodPh ?? 0) },
+          { label: 'Huyết áp tâm thu (mmHg)', data: allDayChartData.map(d => d.averageSystolicPressure ?? 0) },
+          { label: 'Huyết áp tâm trương (mmHg)', data: allDayChartData.map(d => d.averageDiastolicPressure ?? 0) },
+        ],
+      };
+    } else {
+      return {
+        labels: dayChartData.map(d => d.date),
+        datasets: [
+          { label: 'Ban ngày – Nhiệt độ (℃)', data: dayChartData.map(d => d.averageTemperature ?? 0) },
+          { label: 'Ban đêm – Nhiệt độ (℃)', data: nightChartData.map(d => d.averageTemperature ?? 0) },
+          { label: 'Ban ngày – SpO₂ (%)', data: dayChartData.map(d => d.averageSpO2 ?? 0) },
+          { label: 'Ban đêm – SpO₂ (%)', data: nightChartData.map(d => d.averageSpO2 ?? 0) },
+          { label: 'Ban ngày – Nhịp tim (bpm)', data: dayChartData.map(d => d.averageHeartRate ?? 0) },
+          { label: 'Ban đêm – Nhịp tim (bpm)', data: nightChartData.map(d => d.averageHeartRate ?? 0) },
+          { label: 'Ban ngày – pH máu', data: dayChartData.map(d => d.averageBloodPh ?? 0) },
+          { label: 'Ban đêm – pH máu', data: nightChartData.map(d => d.averageBloodPh ?? 0) },
+          { label: 'Ban ngày – Huyết áp tâm thu (mmHg)', data: dayChartData.map(d => d.averageSystolicPressure ?? 0) },
+          { label: 'Ban đêm – Huyết áp tâm thu (mmHg)', data: nightChartData.map(d => d.averageSystolicPressure ?? 0) },
+          { label: 'Ban ngày – Huyết áp tâm trương (mmHg)', data: dayChartData.map(d => d.averageDiastolicPressure ?? 0) },
+          { label: 'Ban đêm – Huyết áp tâm trương (mmHg)', data: nightChartData.map(d => d.averageDiastolicPressure ?? 0) },
+        ],
+      };
+    }
+  };
+  
+
+  useEffect(() => {
+    const userSession = sessionStorage.getItem("user");
+    if (userSession) {
+      try {
+        const user = JSON.parse(userSession);
+        if (user.roles && user.roles.$values) {
+          setIsUser(user.roles.$values.includes("user"));
+        } else {
+          console.error("Roles data is missing or in an incorrect format.");
+        }
+      } catch (error) {
+        console.error("Error parsing session:", error);
+      }
+    }
+  }, []);
+
+  const handleCardRadiusClick = () => {
+    if (isUser) {
+      window.location.href = "/health_check";
+    } 
+  };
+  
+  
 
   return (
    <>
@@ -432,7 +571,7 @@ export default function Dashboard() {
       </div>
       <div className="w-[60%] h-full">
      
-      <Card className="flex flex-col">
+      <Card className="flex flex-col" onClick={handleCardRadiusClick}>
   <CardHeader className="items-center pb-0">
     <CardTitle>Dự đoán đột quỵ</CardTitle>
     <CardDescription>Theo phần trăm nguy cơ</CardDescription>
@@ -873,6 +1012,357 @@ export default function Dashboard() {
 </div>
   )}
     </div>
+    <div>
+  {allDayChartData.length === 0 ? (
+    <p className="text-center text-red-500">{noDataMessage}</p>
+  ) : (
+    <div className="flex flex-wrap gap-4">
+      <div className="w-full md:w-[49%]">
+        <div style={{ marginBottom: 16 }}>
+          <button
+            onClick={() => setMode('allDay')}
+            disabled={mode === 'allDay'}
+            style={{
+              background: mode === 'allDay' ? '#f0f0f0' : 'white',
+              padding: '8px 16px',
+              border: '1px solid #ddd',
+              cursor: mode === 'allDay' ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Trung bình cả ngày
+          </button>
+          <button
+            onClick={() => setMode('splitDayNight')}
+            disabled={mode === 'splitDayNight'}
+            style={{
+              marginLeft: 8,
+              background: mode === 'splitDayNight' ? '#f0f0f0' : 'white',
+              padding: '8px 16px',
+              border: '1px solid #ddd',
+              cursor: mode === 'splitDayNight' ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Ngày & Đêm
+          </button>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Biểu đồ nhịp tim, dữ liệu được hiển thị theo đơn vị bpm:</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={
+                  mode === 'allDay'
+                    ? allDayChartData
+                    : dayChartData.map((day, index) => ({
+                        date: day.date,
+                        dayBPM: day.averageHeartRate ?? 0,
+                        nightBPM: nightChartData[index]?.averageHeartRate ?? 0,
+                      }))
+                }
+                margin={{ top: 20, bottom: 20 }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  type="category"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  tick={{ fontSize: 12 }}
+                  interval={0}
+                />
+                <YAxis
+                  domain={['auto', 'auto']}
+                  tickFormatter={(value) => `${value} BPM`}
+                />
+                <ChartTooltip cursor={false} />
+                {mode === 'allDay' ? (
+                  <Bar
+                    dataKey="averageHeartRate"
+                    name="Trung bình cả ngày"
+                    fill="var(--color-desktop)"
+                    radius={4}
+                    label={{
+                      position: 'top',
+                      fill: '#333',
+                      fontSize: 12,
+                      formatter: (value) => `${value}`,
+                    }}
+                  />
+                ) : (
+                  <>
+                    <Bar
+                      dataKey="dayBPM"
+                      name="Ban ngày"
+                      fill="#60A5FA"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="nightBPM"
+                      name="Ban đêm"
+                      fill="#4ADE80"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </>
+                )}
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+  </div>
+  <div className="w-full md:w-[49%]">
+  <Card>
+          <CardHeader>
+            <CardTitle>Độ bão hòa Oxi trong máu, dữ liệu được hiển thị theo đơn vị %:</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig}>
+              <BarChart
+                data={
+                  mode === 'allDay'
+                    ? allDayChartData.map((item) => ({
+                        ...item,
+                        date: format(new Date(item.date), 'dd'),
+                        averageSpO2: item.averageSpO2,
+                      }))
+                    : dayChartData.map((dayItem) => {
+                        const nightItem = nightChartData.find(
+                          (n) => n.date === dayItem.date
+                        );
+                        return {
+                          date: format(new Date(dayItem.date), 'dd'),
+                          daySpO2: dayItem.averageSpO2,
+                          nightSpO2: nightItem?.averageSpO2 ?? null,
+                        };
+                      })
+                }
+                margin={{ top: 20, bottom: 20 }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  type="category"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  tick={{ fontSize: 12 }}
+                  interval={0}
+                />
+                <YAxis
+                  domain={['auto', 'auto']}
+                  tickFormatter={(value) => `${value}%`}
+                />
+                <ChartTooltip cursor={false} />
+                {mode === 'splitDayNight' ? (
+                  <>
+                    <Bar
+                      dataKey="daySpO2"
+                      fill="#60A5FA"
+                      stackId="a"
+                      label={{
+                        formatter: (value: number) =>
+                          value !== null ? `${value}%` : '',
+                      }}
+                    />
+                    <Bar
+                      dataKey="nightSpO2"
+                      fill="#4ADE80"
+                      stackId="a"
+                      label={{
+                        formatter: (value: number) =>
+                          value !== null ? `${value}%` : '',
+                      }}
+                    />
+                  </>
+                ) : (
+                  <Bar
+                    dataKey="averageSpO2"
+                    fill="#60A5FA"
+                    radius={[4, 4, 0, 0]}
+                    label={{
+                      formatter: (value: number) =>
+                        value !== null ? `${value}%` : '',
+                    }}
+                  />
+                )}
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+  </div>
+  <div className="w-full md:w-[49%]">
+  <Card>
+  <CardHeader>
+    <CardTitle>Biểu đồ huyết áp tâm thu , dữ liệu được hiển thị theo đơn vị mmHg :</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={barChartData}   margin={{ top: 20,  bottom: 20 }}>
+        <CartesianGrid vertical={false} />
+        
+        <XAxis
+  dataKey="time"
+  type="category"
+  tickLine={false}
+  axisLine={false}
+  tickMargin={10}
+  tick={{ fontSize: 12 }}
+  tickFormatter={(value) => value}  
+  interval={0} 
+/>
+
+        <YAxis 
+          domain={['auto', 'auto']} 
+          tickFormatter={(value) => `${value} mmHg`}  
+        />
+
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent />}
+        />
+        
+        <Bar dataKey="systolicPressure" name="mmHg" fill="var(--color-desktop)" radius={4}   label={{
+          position: 'top',
+          fill: '#333', 
+          fontSize: 12,
+          formatter: (value) => `${value}`,
+        }} />
+      </BarChart>
+    </ChartContainer>
+  </CardContent>
+</Card>
+  </div>
+  <div className="w-full md:w-[49%]">
+  <Card>
+  <CardHeader>
+    <CardTitle>Biểu đồ áp suất tâm trương , dữ liệu được hiển thị theo đơn vị mmHg :</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={barChartData}   margin={{ top: 20,  bottom: 20 }}>
+        <CartesianGrid vertical={false} />
+        
+        <XAxis
+  dataKey="time"
+  type="category"
+  tickLine={false}
+  axisLine={false}
+  tickMargin={10}
+  tick={{ fontSize: 12 }}
+  tickFormatter={(value) => value}  
+  interval={0} 
+/>
+
+        <YAxis 
+          domain={['auto', 'auto']} 
+          tickFormatter={(value) => `${value} mmHg`}  
+        />
+
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent />}
+        />
+        
+        <Bar dataKey="diastolicPressure" name="mmHg" fill="var(--color-desktop)" radius={4}   label={{
+          position: 'top',
+          fill: '#333', 
+          fontSize: 12,
+          formatter: (value) => `${value}`,
+        }} />
+      </BarChart>
+    </ChartContainer>
+  </CardContent>
+</Card>
+  </div>
+  <div className="w-full md:w-[49%]">
+  <Card>
+  <CardHeader>
+    <CardTitle>Biểu đồ hiển thị nhiệt độ , dữ liệu được hiển thị theo đơn vị °C :</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={barChartData}   margin={{ top: 20,  bottom: 20 }}>
+        <CartesianGrid vertical={false} />
+        
+        <XAxis
+  dataKey="time"
+  type="category"
+  tickLine={false}
+  axisLine={false}
+  tickMargin={10}
+  tick={{ fontSize: 12 }}
+  tickFormatter={(value) => value}  
+  interval={0} 
+/>
+
+        <YAxis 
+          domain={['auto', 'auto']} 
+          tickFormatter={(value) => `${value} °C`}  
+        />
+
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent />}
+        />
+        
+        <Bar dataKey="temperature" name="°C" fill="var(--color-desktop)" radius={4}  label={{
+          position: 'top',
+          fill: '#333', 
+          fontSize: 12,
+          formatter: (value) => `${value}`,
+        }}  />
+      </BarChart>
+    </ChartContainer>
+  </CardContent>
+</Card>
+  </div>
+  <div className="w-full md:w-[49%]">
+  <Card>
+  <CardHeader>
+    <CardTitle>Biểu đồ hiển thị PH trong máu , dữ liệu được hiển thị theo đơn vị pH :</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={barChartData}   margin={{ top: 20, bottom: 20}}>
+        <CartesianGrid vertical={false} />
+        
+        <XAxis
+  dataKey="time"
+  type="category"
+  tickLine={false}
+  axisLine={false}
+  tickMargin={10}
+  tick={{ fontSize: 12 }}
+  tickFormatter={(value) => value}  
+  interval={0} 
+/>
+
+        <YAxis 
+          domain={['auto', 'auto']} 
+          tickFormatter={(value) => `${value} pH`}  
+        />
+
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent />}
+        />
+        
+        <Bar dataKey="bloodPh" name="pH" fill="var(--color-desktop)" radius={4}  label={{
+          position: 'top',
+          fill: '#333', 
+          fontSize: 12,
+          formatter: (value) => `${value}`,
+        }}  />
+      </BarChart>
+    </ChartContainer>
+  </CardContent>
+</Card>
+  </div>
+</div>
+  )}
+   </div>
    </Container>
    </>
   );

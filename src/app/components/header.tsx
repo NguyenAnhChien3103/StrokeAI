@@ -102,12 +102,14 @@ const Header = () => {
     if (userSession) {
       try {
         const user = JSON.parse(userSession);
-        setIsAdmin(user.roles.includes("admin"));
+        const roles = user.roles?.$values || [];
+        setIsAdmin(roles.includes("admin"));
       } catch (error) {
         console.error("Lỗi parse session:", error);
       }
     }
   }, []);
+  
 
   return (
     <>

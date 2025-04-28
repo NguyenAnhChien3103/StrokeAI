@@ -26,23 +26,9 @@ const API_ENDPOINTS = {
   addAdminRole: (userId) => `${API_BASE_URL}/admin/add-admin-role/${userId}`,
   removeAdmin: (userId) => `${API_BASE_URL}/admin/remove-admin/${userId}`, 
   deleteUser: (userId) => `${API_BASE_URL}/admin/delete-user/${userId}`, 
-  getUserGps: (inviterId) => `${API_BASE_URL}/User/user_gps?userId=${inviterId}`, 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  getUserGps: (inviterId) => `${API_BASE_URL}/User/user-gps?userId=${inviterId}`,
+  getPercentIndicatorIsTrue: (userId) => `${API_BASE_URL}/Indicators/get-percent-indicator-is-true?userId=${userId}`,
+  getAverageDailyNightLast14Days : (deviceId) => `${API_BASE_URL}/UserMedicalDatas/average-daily-night-last-14-days/${deviceId}`,
 
   addClinicalIndicator: `${API_BASE_URL}/Indicators/add-clinical-indicator`,
   getUserDetails: `${API_BASE_URL}/Users/details`,
