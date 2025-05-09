@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import useSWRMutation from "swr/mutation";
-import { useRouter } from "next/navigation";
 import ForgotPassword from "./forgot_password";
 import API_ENDPOINTS from '../utils/apiConfig'; 
 
@@ -37,7 +36,6 @@ export default function Login({
   setShowModalResetPasswordOTP,
   setEmailForReset,
  }: ILogin) {
-  const router = useRouter();
   const [credential, setCredential] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -73,7 +71,6 @@ export default function Login({
         const response = await trigger({ Credential: credential, Password: password });
         sessionStorage.setItem("user", JSON.stringify(response.data));
         setShowModalLogin(false);
-        router.push("/dashboard");
         setTimeout(() => {
           window.location.reload();
         }, 500);

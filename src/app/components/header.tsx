@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, LogOut, UserIcon, Lock, Users , Heart , Smartphone } from "lucide-react";
+import { Menu, X, LogOut, UserIcon, Lock, Users , Heart , Smartphone ,  Bell , MapPin, FileText } from "lucide-react";
 import Login from "./login";
 import Register from "./register";
 import { Button } from "react-bootstrap";
@@ -12,6 +12,7 @@ import VerifyOTP from "./verify";
 import { FaUserCircle } from "react-icons/fa";
 import ResetPasswordOTP from "./verify_reset_password";
 import ForgotPassword from "./forgot_password";
+import Nofication from "../components/nofication"; 
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,6 +25,9 @@ const Header = () => {
   const [showModalResetPasswordOTP, setShowModalResetPasswordOTP] = useState(false);
   const [showModalForgotPassword, setShowModalForgotPassword] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isUser, setIsUser] = useState(false);
+  const bellTimeoutRef = useRef(null); 
+
 
   interface User {
     id: string;
@@ -31,17 +35,17 @@ const Header = () => {
   }
 
   const [user, setUser] = useState<User | null>(null);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showBellDropdown, setShowBellDropdown] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  
 
   const navItems = [
     { href: "/", label: "Trang Chủ" },
-    { href: "/info", label: "Thông Tin" },
-    { href: "/services", label: "Dịch Vụ" },
     { href: "https://www.prudential.com.vn/vi/blog-nhip-song-khoe/dot-quy-tre-hoa-va-nguy-co-cho-ca-mot-the-he/", label: "Bài Viết" },
-    { href: "/pages", label: "Các Trang" },
-    { href: "/contact", label: "Liên Hệ" },
+    { href: "/first_aid_instructions", label: "Hướng dẫn sơ cứu" }, 
+    { href: "https://www.happymoveonline.vn/content/8097/c%C3%A1c-s%E1%BB%91-%C4%91i%E1%BB%87n-tho%E1%BA%A1i-kh%E1%BA%A9n-c%E1%BA%A5p-m%C3%A0-b%E1%BA%A1n-n%C3%AAn-ghi-nh%E1%BB%9B#:~:text=%2D%20112%20l%C3%A0%20%C4%91%E1%BA%A7u%20s%E1%BB%91%20y%C3%AAu,c%E1%BA%A5p%20c%E1%BB%A9u%20v%E1%BB%81%20y%20t%E1%BA%BF.", label: "Liên Hệ Cứu Hộ Khẩn Cấp" }
   ];
 
   const handleProfile = () => {
@@ -65,27 +69,39 @@ const Header = () => {
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setShowDropdown(true);
+    setShowUserDropdown(true);
+    setShowBellDropdown(false); 
   };
-
+  
   const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => setShowDropdown(false), 500);
+    timeoutRef.current = setTimeout(() => setShowUserDropdown(false), 500);
   };
-
+  
   const handleLogout = () => {
     sessionStorage.removeItem("user");
     sessionStorage.removeItem("devices");
     setUser(null);
-    setShowDropdown(false);
+    setShowUserDropdown(false);
     router.push("/");
   };
+  
+  const handleBellMouseEnter = () => {
+    if (bellTimeoutRef.current) clearTimeout(bellTimeoutRef.current);
+    setShowBellDropdown(true);
+    setShowUserDropdown(false); 
+  };
+  
+  const handleBellMouseLeave = () => {
+    bellTimeoutRef.current = setTimeout(() => setShowBellDropdown(false), 100);
+  };
+  
 
   const handleInviteFamily = () => {
      router.push("/invite");
   };
 
   const handleHealthStats = () => {
-    router.push("/dashboard");
+    router.push("/user_dashboard");
   }
   
 
@@ -93,8 +109,17 @@ const Header = () => {
     router.push('/change_password');
   };
 
-  const handleManageUsers = () => {
-    router.push('/manager_user');
+
+  const handleManagePatients = () => {
+    router.push('/admin_dashboard'); 
+  };
+
+  const  handleViewLocation = () => {
+    router.push('/me_location');
+  }
+
+  const handleCaseHistory = () => {
+    router.push('/case_history');
   };
 
   useEffect(() => {
@@ -102,13 +127,15 @@ const Header = () => {
     if (userSession) {
       try {
         const user = JSON.parse(userSession);
-        const roles = user.roles?.$values || [];
+        const roles = user.roles || [];
         setIsAdmin(roles.includes("admin"));
+        setIsUser(roles.includes("user"));
       } catch (error) {
         console.error("Lỗi parse session:", error);
       }
     }
   }, []);
+  
   
 
   return (
@@ -174,94 +201,111 @@ const Header = () => {
           ))}
         </nav>
 
-        <div className="hidden md:flex space-x-4">
-          {user ? (
-            <div
-              className="relative z-50"
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-            >
-              <button className="px-4 py-2 text-black font-semibold transition flex">
-              <FaUserCircle className="text-gray-500 text-2xl mr-3" />
-              <span>{patientName} </span>
+        <>
+  <div className="hidden md:flex space-x-4">
+    {user ? (
+      <>
+        <div
+          className="relative z-50"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <button className="py-2 text-black font-semibold transition flex items-center">
+            <FaUserCircle className="text-gray-500 text-2xl mr-2" />
+            <span >{patientName},</span>
+          </button>
+
+          {showUserDropdown && (
+            <div className="absolute left-1/2 top-full transform -translate-x-1/2 mt-1 bg-white shadow-md rounded-lg py-2 min-w-max">
+              <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleProfile}>
+                <UserIcon size={18} className="mr-2" />
+                Thông tin cá nhân
               </button>
-              {showDropdown && (
-                <div className="absolute left-1/2 top-full transform -translate-x-1/2 mt-1 bg-white shadow-md rounded-lg py-2 min-w-max">
-                  <button
-                    className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
-                    onClick={handleProfile}
-                  >
-                    <UserIcon size={18} className="mr-2" />
-                    Thông tin cá nhân
-                  </button>
-                  {isAdmin && (
-                 <button
-                   className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
-                  onClick={handleManageUsers}
-                    >
-                  <Users size={18} className="mr-2" />
-                  Quản lý người dùng
-                   </button>
-                      )}
-                 <button
-                   className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
-                   onClick={handleManageDevices}
-                  >
-                  <Smartphone size={18} className="mr-2" /> 
-                 Quản lý thiết bị
-                 </button>
-
-                 <button
-                  className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
-                  onClick={handleInviteFamily} 
-                  >
-                 <Users size={18} className="mr-2" />
-                  Mời người nhà
-                  </button>
-                   
-                  <button
-               className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
-                onClick={handleHealthStats} 
-                >
-                <Heart size={18} className="mr-2" /> 
-                 Chỉ số sức khỏe
-                 </button>
-
-                  <button
-                      className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
-                      onClick={handleChangePassword}
-                        >
-                     <Lock size={18} className="mr-2" />
-                     Đổi mật khẩu
-                  </button>
-                  <button
-                    className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
-                    onClick={handleLogout}
-                  >
-                    <LogOut size={18} className="mr-2" />
-                    Đăng xuất
-                  </button>
-                </div>
+              {isUser && (
+                <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleViewLocation}>
+                  <MapPin size={18} className="mr-2" />
+                  Xem vị trí bản thân
+                </button>
               )}
-            </div>
-          ) : (
-            <>
-              <Button
-                variant="none"
-                className="px-4 py-2 rounded-full text-black hover:bg-cyan-500 hover:text-white transition"
-                onClick={() => setShowModalRegister(true)}
-              >
-                Đăng ký
-              </Button>
-              <button
-                className="px-4 py-2 !rounded-full bg-cyan-500 text-white font-semibold hover:bg-cyan-600 transition"
-                onClick={() => setShowModalLogin(true)}
-              >
-                Đăng nhập
+              {isUser && (
+                <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleCaseHistory}>
+                  <FileText size={18} className="mr-2" />
+                  Lịch sử bệnh án
+                </button>
+              )}
+              {isAdmin && (
+                <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleManagePatients}>
+                  <Users size={18} className="mr-2" />
+                  Quản lý bệnh nhân
+                </button>
+              )}
+                   {isUser && (
+              <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleManageDevices}>
+                <Smartphone size={18} className="mr-2" />
+                Quản lý thiết bị
               </button>
-            </>
+                 )}
+      
+              <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleInviteFamily}>
+                <Users size={18} className="mr-2" />
+                Mời người nhà
+              </button>
+        
+              {isUser && (
+                <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleHealthStats}>
+                  <Heart size={18} className="mr-2" />
+                  Chỉ số sức khỏe
+                </button>
+              )}
+              <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleChangePassword}>
+                <Lock size={18} className="mr-2" />
+                Đổi mật khẩu
+              </button>
+              <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleLogout}>
+                <LogOut size={18} className="mr-2" />
+                Đăng xuất
+              </button>
+            </div>
           )}
         </div>
+
+        <div
+  className="relative z-50"
+  onMouseEnter={handleBellMouseEnter}
+  onMouseLeave={handleBellMouseLeave}
+>
+  <button className="px-2 py-2">
+    <Bell className="text-gray-500 text-2xl" />
+  </button>
+
+  {showBellDropdown && (
+    <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 bg-white shadow-md rounded-lg py-2 min-w-[350px] max-w-[600px] w-auto z-50">
+      <Nofication />
+    </div>
+  )}
+</div>
+
+      </>
+    ) : (
+      <>
+        <Button
+          variant="none"
+          className="px-4 py-2 rounded-full text-black hover:bg-cyan-500 hover:text-white transition"
+          onClick={() => setShowModalRegister(true)}
+        >
+          Đăng ký
+        </Button>
+        <button
+          className="px-4 py-2 !rounded-full bg-cyan-500 text-white font-semibold hover:bg-cyan-600 transition"
+          onClick={() => setShowModalLogin(true)}
+        >
+          Đăng nhập
+        </button>
+      </>
+    )}
+  </div>
+</>
+
 
         <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <X size={28} /> : <Menu size={28} />}

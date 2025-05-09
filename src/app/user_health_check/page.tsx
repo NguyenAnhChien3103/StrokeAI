@@ -6,6 +6,7 @@ import API_ENDPOINTS from '../utils/apiConfig';
 import { Container } from 'react-bootstrap';
 
 export default function Health_Check() {
+  const [token, setToken] = useState("");
   const [userId, setUserId] = useState('');
   const [formData, setFormData] = useState({
     DauDau: false,
@@ -27,6 +28,7 @@ export default function Health_Check() {
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUserId(parsedUser.userId);
+      setToken(parsedUser.token);
     }
   }, []);
 
@@ -57,13 +59,17 @@ export default function Health_Check() {
     try {
       const response = await fetch(API_ENDPOINTS.addClinicalIndicator, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,  
+        },
         body: JSON.stringify(fullData),
       });
+      
 
       if (response.ok) {
         alert("Gửi thành công!");
-        router.push('/dashboard');
+        router.push('/user_dashboard');
       } else {
         const errorText = await response.text();
         console.error("Lỗi phản hồi:", errorText);
