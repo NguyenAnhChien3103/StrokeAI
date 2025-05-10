@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Table from 'react-bootstrap/Table';
 import { useRouter } from 'next/navigation'; 
 import { Button } from "react-bootstrap";
+import API_ENDPOINTS from '../utils/apiConfig';
 
 interface CaseHistory {
   caseHistoryId: number;
@@ -56,7 +57,7 @@ export default function DoctorDashboard()  {
     }
 
     try {
-      const response = await fetch(`http://localhost:5062/api/Doctor/dashboard`, {
+      const response = await fetch(API_ENDPOINTS.getDoctorDashboard, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -64,6 +65,11 @@ export default function DoctorDashboard()  {
           "Authorization": `Bearer ${token}`,
         },
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} - ${errorText}`);
+      }
 
       const json = await response.json();
       console.log('API Response:', json);
@@ -82,7 +88,7 @@ export default function DoctorDashboard()  {
       }
     } catch (err) {
       console.error('Fetch error:', err);
-      setError("Lỗi khi gọi API: " + err);
+      setError("Lỗi khi gọi API: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -95,7 +101,7 @@ export default function DoctorDashboard()  {
     }
   
     try {
-      const response = await fetch(`http://localhost:5062/api/Doctor/my-patients`, {
+      const response = await fetch(API_ENDPOINTS.getDoctorPatients, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -104,6 +110,11 @@ export default function DoctorDashboard()  {
         },
       });
   
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} - ${errorText}`);
+      }
+
       const json = await response.json();
       console.log('Patients API Response:', json);
       
@@ -118,7 +129,7 @@ export default function DoctorDashboard()  {
       }
     } catch (err) {
       console.error('Patients fetch error:', err);
-      setError("Lỗi khi gọi API: " + err);
+      setError("Lỗi khi gọi API: " + (err instanceof Error ? err.message : String(err)));
     }
   };
   

@@ -742,8 +742,8 @@ const PatientDetail = () => {
     const patientId = parseInt(idRaw, 10);
     const fetchData = async () => {
       try {
-        const urlSum = `http://localhost:5062/api/Doctor/patient/${patientId}/summary`;
-        const urlAno = `http://localhost:5062/api/Doctor/patient/${patientId}/anomalies`;
+        const urlSum = API_ENDPOINTS.getPatientSummary(patientId);
+        const urlAno = API_ENDPOINTS.getPatientAnomalies(patientId);
         console.log('Fetching', urlSum, urlAno);
   
         const headers = { 

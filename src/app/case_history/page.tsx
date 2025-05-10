@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Container } from 'react-bootstrap';
 import { CheckCircle2, XCircle } from "lucide-react";
+import API_ENDPOINTS from '../utils/apiConfig';
 
 interface ClinicalIndicator {
   clinicalIndicatorID: number;
@@ -135,6 +136,7 @@ export default function CaseHistory() {
     }
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHealthData = async () => {
@@ -154,15 +156,17 @@ export default function CaseHistory() {
           return;
         }
 
-        const response = await fetch(`http://localhost:5062/api/User/health-profile`, {
+        const response = await fetch(API_ENDPOINTS.getHealthProfile, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": `Bearer ${token}`,
           },
         });
 
         if (!response.ok) {
-          setLoading(false);
-          return;
+          const errorText = await response.text();
+          throw new Error(`API error: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
@@ -181,6 +185,7 @@ export default function CaseHistory() {
         }
       } catch (err) {
         console.error("Error details:", err);
+        setError(err instanceof Error ? err.message : String(err));
       } finally {
         setLoading(false);
       }
