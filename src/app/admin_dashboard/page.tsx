@@ -40,6 +40,9 @@ export default function DoctorDashboard()  {
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [genderFilter, setGenderFilter] = useState<string>('all');
+  const [ageFilter, setAgeFilter] = useState<string>('all');
   const router = useRouter();
 
   useEffect(() => {
@@ -144,6 +147,26 @@ export default function DoctorDashboard()  {
     }
   }, [token]);
 
+  const filteredPatients = patients.filter(patient => {
+    const matchesSearch = 
+      patient.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.phone.includes(searchTerm);
+
+    const matchesGender = 
+      genderFilter === 'all' || 
+      (genderFilter === 'male' && patient.gender) ||
+      (genderFilter === 'female' && !patient.gender);
+
+    const matchesAge = 
+      ageFilter === 'all' ||
+      (ageFilter === 'under18' && patient.age < 18) ||
+      (ageFilter === '18to50' && patient.age >= 18 && patient.age <= 50) ||
+      (ageFilter === 'over50' && patient.age > 50);
+
+    return matchesSearch && matchesGender && matchesAge;
+  });
+
   if (loading) return <div>Đang tải dữ liệu...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
   if (!dashboardData) return <div>Không có dữ liệu.</div>;
@@ -159,8 +182,40 @@ export default function DoctorDashboard()  {
       </div>
 
       <p className="text-2xl !font-bold text-cyan-500 mb-6 mt-4">Danh sách bệnh nhân của bác sĩ</p>
-      {patients.length === 0 ? (
-        <p>Không có bệnh nhân nào.</p>
+      
+      <div className="mb-4 flex flex-wrap gap-4">
+        <div className="flex-1 min-w-[200px]">
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
+            className="w-full p-2 border rounded"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <select
+          className="p-2 border rounded"
+          value={genderFilter}
+          onChange={(e) => setGenderFilter(e.target.value)}
+        >
+          <option value="all">Tất cả giới tính</option>
+          <option value="male">Nam</option>
+          <option value="female">Nữ</option>
+        </select>
+        <select
+          className="p-2 border rounded"
+          value={ageFilter}
+          onChange={(e) => setAgeFilter(e.target.value)}
+        >
+          <option value="all">Tất cả độ tuổi</option>
+          <option value="under18">Dưới 18</option>
+          <option value="18to50">18 - 50</option>
+          <option value="over50">Trên 50</option>
+        </select>
+      </div>
+
+      {filteredPatients.length === 0 ? (
+        <p>Không tìm thấy bệnh nhân nào phù hợp với điều kiện tìm kiếm.</p>
       ) : (
         <Table striped bordered hover responsive>
           <thead>
@@ -175,7 +230,7 @@ export default function DoctorDashboard()  {
             </tr>
           </thead>
           <tbody>
-            {patients.map((patient) => (
+            {filteredPatients.map((patient) => (
               <tr key={patient.userId}>
                 <td>{patient.patientName}</td>
                 <td>{new Date(patient.dateOfBirth).toLocaleDateString('en-GB')}</td>
