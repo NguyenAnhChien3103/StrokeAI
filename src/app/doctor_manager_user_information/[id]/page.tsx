@@ -1548,6 +1548,7 @@ const PatientDetail = () => {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
           <YAxis
@@ -1631,6 +1632,7 @@ const PatientDetail = () => {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
 <YAxis
@@ -1715,6 +1717,7 @@ const PatientDetail = () => {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
 <YAxis
@@ -1799,6 +1802,7 @@ const PatientDetail = () => {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
 <YAxis
@@ -1882,6 +1886,7 @@ const PatientDetail = () => {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
 <YAxis
@@ -1964,6 +1969,7 @@ const PatientDetail = () => {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
 <YAxis
@@ -2036,22 +2042,6 @@ const PatientDetail = () => {
           </>
         ) : (
           <p>Đang tải dữ liệu...</p>
-        )}
-      </div>
-
-      <div className="mt-4">
-        <p className="text-2xl !font-bold text-cyan-500 mb-6">Các bất thường</p>
-        {anomalies?.$values?.length > 0 ? (
-          <ul className="list-disc pl-5">
-            {anomalies.$values.map((anomaly, index) => (
-              <li key={index} className="mb-4">
-                <p><strong>ID bất thường:</strong> {anomaly.anomalyId}</p>
-                <p><strong>Mô tả:</strong> {anomaly.description}</p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>Không có bất thường nào.</p>
         )}
       </div>
     </Container>

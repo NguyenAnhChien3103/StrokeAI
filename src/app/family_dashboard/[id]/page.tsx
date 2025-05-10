@@ -1088,6 +1088,7 @@ export default function FamilyDashboard() {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
           <YAxis
@@ -1171,6 +1172,7 @@ export default function FamilyDashboard() {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
 <YAxis
@@ -1255,6 +1257,7 @@ export default function FamilyDashboard() {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
 <YAxis
@@ -1339,6 +1342,7 @@ export default function FamilyDashboard() {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
 <YAxis
@@ -1422,6 +1426,7 @@ export default function FamilyDashboard() {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
 <YAxis
@@ -1504,6 +1509,7 @@ export default function FamilyDashboard() {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => format(new Date(tick), "dd")}
           />
 <YAxis

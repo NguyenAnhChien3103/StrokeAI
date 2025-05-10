@@ -524,43 +524,69 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!Array.isArray(nightDayData) || nightDayData.length === 0) return;
-  
+
     const transformData = () => {
-      return nightDayData
-        .map((item: NightDayEntry) => ({
-          date: item.date,
-          time: format(new Date(item.date), 'HH:mm'),
-          allDayTemperature: item.allDayAverage?.averageTemperature ?? null,
-          allDaySpO2: item.allDayAverage?.averageSpO2 ?? null,
-          allDayHeartRate: item.allDayAverage?.averageHeartRate ?? null,
-          allDayBloodPh: item.allDayAverage?.averageBloodPh ?? null,
-          allDaySystolicPressure: item.allDayAverage?.averageSystolicPressure ?? null,
-          allDayDiastolicPressure: item.allDayAverage?.averageDiastolicPressure ?? null,
-          averageTemperature: item.dailyAverage?.averageTemperature ?? null,
-          averageSpO2: item.dailyAverage?.averageSpO2 ?? null,
-          averageHeartRate: item.dailyAverage?.averageHeartRate ?? null,
-          averageBloodPh: item.dailyAverage?.averageBloodPh ?? null,
-          averageSystolicPressure: item.dailyAverage?.averageSystolicPressure ?? null,
-          averageDiastolicPressure: item.dailyAverage?.averageDiastolicPressure ?? null,
-          nightTemperature: item.nightlyAverage?.averageTemperature ?? null,
-          nightSpO2: item.nightlyAverage?.averageSpO2 ?? null,
-          nightHeartRate: item.nightlyAverage?.averageHeartRate ?? null,
-          nightBloodPh: item.nightlyAverage?.averageBloodPh ?? null,
-          nightSystolicPressure: item.nightlyAverage?.averageSystolicPressure ?? null,
-          nightDiastolicPressure: item.nightlyAverage?.averageDiastolicPressure ?? null,
-        }))
-        .filter(item => {
-          if (mode === 'allDay') {
-            return item.allDayHeartRate !== null || 
-                   item.allDaySpO2 !== null || 
-                   item.allDaySystolicPressure !== null;
-          }
-          return (item.averageHeartRate !== null || item.nightHeartRate !== null) ||
-                 (item.averageSpO2 !== null || item.nightSpO2 !== null) ||
-                 (item.averageSystolicPressure !== null || item.nightSystolicPressure !== null);
-        });
+      // Create array of last 14 days, newest first
+      const last14Days = Array.from({ length: 14 }, (_, i) => {
+        const date = subDays(new Date(), 13 - i);
+        return format(date, 'yyyy-MM-dd');
+      });
+
+      // Transform and merge data
+      return last14Days.map(date => {
+        const existingData = nightDayData.find(item => item.date === date);
+        
+        if (existingData) {
+          return {
+            date: existingData.date,
+            time: format(new Date(existingData.date), 'HH:mm'),
+            allDayTemperature: existingData.allDayAverage?.averageTemperature ?? null,
+            allDaySpO2: existingData.allDayAverage?.averageSpO2 ?? null,
+            allDayHeartRate: existingData.allDayAverage?.averageHeartRate ?? null,
+            allDayBloodPh: existingData.allDayAverage?.averageBloodPh ?? null,
+            allDaySystolicPressure: existingData.allDayAverage?.averageSystolicPressure ?? null,
+            allDayDiastolicPressure: existingData.allDayAverage?.averageDiastolicPressure ?? null,
+            averageTemperature: existingData.dailyAverage?.averageTemperature ?? null,
+            averageSpO2: existingData.dailyAverage?.averageSpO2 ?? null,
+            averageHeartRate: existingData.dailyAverage?.averageHeartRate ?? null,
+            averageBloodPh: existingData.dailyAverage?.averageBloodPh ?? null,
+            averageSystolicPressure: existingData.dailyAverage?.averageSystolicPressure ?? null,
+            averageDiastolicPressure: existingData.dailyAverage?.averageDiastolicPressure ?? null,
+            nightTemperature: existingData.nightlyAverage?.averageTemperature ?? null,
+            nightSpO2: existingData.nightlyAverage?.averageSpO2 ?? null,
+            nightHeartRate: existingData.nightlyAverage?.averageHeartRate ?? null,
+            nightBloodPh: existingData.nightlyAverage?.averageBloodPh ?? null,
+            nightSystolicPressure: existingData.nightlyAverage?.averageSystolicPressure ?? null,
+            nightDiastolicPressure: existingData.nightlyAverage?.averageDiastolicPressure ?? null,
+          };
+        }
+
+        // Return empty data structure for days without data
+        return {
+          date,
+          time: format(new Date(date), 'HH:mm'),
+          allDayTemperature: null,
+          allDaySpO2: null,
+          allDayHeartRate: null,
+          allDayBloodPh: null,
+          allDaySystolicPressure: null,
+          allDayDiastolicPressure: null,
+          averageTemperature: null,
+          averageSpO2: null,
+          averageHeartRate: null,
+          averageBloodPh: null,
+          averageSystolicPressure: null,
+          averageDiastolicPressure: null,
+          nightTemperature: null,
+          nightSpO2: null,
+          nightHeartRate: null,
+          nightBloodPh: null,
+          nightSystolicPressure: null,
+          nightDiastolicPressure: null,
+        };
+      });
     };
-  
+
     const transformedData = transformData();
     console.log('Transformed Data:', transformedData);
     setAllDayChartData(transformedData);
@@ -1300,6 +1326,7 @@ export default function Dashboard() {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => {
               try {
                 if (!tick) return '';
@@ -1389,6 +1416,7 @@ export default function Dashboard() {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => {
               try {
                 if (!tick) return '';
@@ -1482,6 +1510,7 @@ export default function Dashboard() {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => {
               try {
                 if (!tick) return '';
@@ -1575,6 +1604,7 @@ export default function Dashboard() {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12 }}
+            reversed={true}
             tickFormatter={(tick) => {
               try {
                 if (!tick) return '';
