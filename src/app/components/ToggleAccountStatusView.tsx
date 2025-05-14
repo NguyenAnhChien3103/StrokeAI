@@ -70,8 +70,8 @@ export default function ToggleAccountStatusView({ users, token, onSuccess }: Tog
         users={users}
         onAction={handleToggleAccountStatus}
         actionButton={{
-          variant: "warning",
-          label: (user) => user.isLocked ? "Mở khóa tài khoản" : "Khóa tài khoản"
+          variant: (user: User) => user.isLocked ? "success" : "danger",
+          label: (user: User) => user.isLocked ? "Mở khóa tài khoản" : "Khóa tài khoản"
         }}
       />
     </div>

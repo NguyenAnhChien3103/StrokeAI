@@ -17,7 +17,7 @@ export default function ChatBot() {
       const initChat = `
         import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
         createChat({
-          webhookUrl: 'https://workflow.makeai.vn/webhook/9f8e4a1a-3c19-48e1-ad90-f1efed1d7dce/chat'
+          webhookUrl: 'https://ronmanhwa.app.n8n.cloud/webhook/c06e7c6d-be67-4e4b-ac71-3781fdaea258/chat'
         });
       `;
       

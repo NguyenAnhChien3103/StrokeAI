@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, Container } from 'react-bootstrap';
 import { CheckCircle2, XCircle } from "lucide-react";
 import API_ENDPOINTS from '../utils/apiConfig';
+import { useRouter } from 'next/navigation';
 
 interface ClinicalIndicator {
   clinicalIndicatorID: number;
@@ -82,6 +83,7 @@ const NoDataMessage = () => (
 );
 
 export default function CaseHistory() {
+  const router = useRouter();
   const [healthIndicators, setHealthIndicators] = useState<HealthIndicators>({
     clinical: {
       clinicalIndicatorID: 0,
@@ -136,7 +138,6 @@ export default function CaseHistory() {
     }
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHealthData = async () => {
@@ -185,7 +186,6 @@ export default function CaseHistory() {
         }
       } catch (err) {
         console.error("Error details:", err);
-        setError(err instanceof Error ? err.message : String(err));
       } finally {
         setLoading(false);
       }
@@ -198,7 +198,15 @@ export default function CaseHistory() {
 
   return (
     <Container className="max-w-lg mx-auto !px-20 py-5">
-      <p className="text-2xl !font-bold text-cyan-500 mb-6">Chỉ số sức khỏe</p>
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-2xl !font-bold text-cyan-500">Chỉ số sức khỏe</p>
+        <button
+          onClick={() => router.push('/user_health_check')}
+          className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white !rounded-full font-semibold hover:from-cyan-600 hover:to-blue-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+        >
+          Cập nhật chỉ số
+        </button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>

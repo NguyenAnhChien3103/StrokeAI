@@ -29,7 +29,6 @@ export default function UserActionView({ users, token, onSuccess, actionType }: 
           successMessage = "Người dùng đã được xóa thành công.";
           errorMessage = "Không thể xóa người dùng. Vui lòng thử lại sau.";
 
-          // Kiểm tra nếu đang xóa chính tài khoản của mình
           const currentUser = sessionStorage.getItem("user");
           if (currentUser) {
             const parsedUser = JSON.parse(currentUser);
@@ -43,7 +42,7 @@ export default function UserActionView({ users, token, onSuccess, actionType }: 
           break;
 
         case 'addAdmin':
-          endpoint = API_ENDPOINTS.addAdminRole(userId);
+          endpoint = API_ENDPOINTS.addAdminRole;
           successMessage = "Đã thêm quyền Admin cho người dùng.";
           errorMessage = "Không thể thêm quyền Admin";
           break;

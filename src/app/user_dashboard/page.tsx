@@ -9,6 +9,7 @@ import { Label, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts"
 import { useEffect, useState } from "react";
 import { format, subDays } from 'date-fns';
 import API_ENDPOINTS from '../utils/apiConfig';
+import { useRouter } from 'next/navigation';
 
 import {
   HeartPulse,
@@ -190,7 +191,6 @@ interface AverageChartData {
   nightDiastolicPressure?: number | null;
 }
 
-// Add new interface for bar chart data
 interface BarChartData {
   date: string;
   time: string;
@@ -202,7 +202,6 @@ interface BarChartData {
   bloodPh: number | null;
 }
 
-// Add new interface for radar chart data
 interface RadarChartData {
   metric: string;
   value: number;
@@ -224,10 +223,10 @@ export default function Dashboard() {
   const [dayChartData, setDayChartData] = useState<AverageChartData[]>([]);
   const [nightChartData, setNightChartData] = useState<AverageChartData[]>([]);
   const [mode, setMode] = useState<'allDay' | 'splitDayNight'>('allDay');
-  const [isUser, setIsUser] = useState(false);
   const [radiusChartData, setRadiusChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
 
   const last14Days: { label: string; date: Date }[] = Array.from({ length: 14 }, (_, i) => {
@@ -323,7 +322,6 @@ export default function Dashboard() {
         console.log('API Data:', data);
   
         if (data && Array.isArray(data)) {
-          // Transform API data to match our chart data structure
           const transformedData = data.map(item => ({
             date: formattedDate,
             time: format(new Date(item.recordedAt), 'HH:00'),
@@ -379,7 +377,6 @@ export default function Dashboard() {
       return;
     }
 
-    // Create a map of existing data by hour
     const dataByHour = dailyChartData.reduce((acc, item) => {
       if (item.time) {
         acc[item.time] = {
@@ -396,7 +393,6 @@ export default function Dashboard() {
       return acc;
     }, {});
 
-    // Fill in all hours with either existing data or null values
     const fullData = fixedHours.map(hour => {
       return dataByHour[hour] || {
         date: format(selectedDate, 'yyyy-MM-dd'),
@@ -526,13 +522,11 @@ export default function Dashboard() {
     if (!Array.isArray(nightDayData) || nightDayData.length === 0) return;
 
     const transformData = () => {
-      // Create array of last 14 days, newest first
       const last14Days = Array.from({ length: 14 }, (_, i) => {
         const date = subDays(new Date(), 13 - i);
         return format(date, 'yyyy-MM-dd');
       });
 
-      // Transform and merge data
       return last14Days.map(date => {
         const existingData = nightDayData.find(item => item.date === date);
         
@@ -561,7 +555,6 @@ export default function Dashboard() {
           };
         }
 
-        // Return empty data structure for days without data
         return {
           date,
           time: format(new Date(date), 'HH:mm'),
@@ -688,35 +681,9 @@ export default function Dashboard() {
     }
   };
   
-  
-
-  useEffect(() => {
-    const storedUser = sessionStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      const roles = parsedUser.roles || [];
-      if (roles.includes("user")) {
-        setIsUser(true);
-      }
-      if (isUser) {
-        window.location.href = "/user_health_check";
-      }
-    }
-  }, []);
 
   const handleCardRadiusClick = () => {
-    const storedUser = sessionStorage.getItem("user");
-
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      const roles = parsedUser.roles || [];
-      if (roles.includes("user")) {
-        setIsUser(true);
-      }
-      if (isUser) {
-        window.location.href = "/user_health_check";  
-      }
-    }
+    router.push('/user_health_check');
   };
   
   useEffect(() => {

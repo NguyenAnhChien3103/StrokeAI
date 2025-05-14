@@ -25,7 +25,7 @@ const Header = () => {
   const [showModalResetPasswordOTP, setShowModalResetPasswordOTP] = useState(false);
   const [showModalForgotPassword, setShowModalForgotPassword] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isUser, setIsUser] = useState(false);
+  const [isDoctor, setIsDoctor] = useState(false);
   const bellTimeoutRef = useRef(null); 
 
 
@@ -122,6 +122,10 @@ const Header = () => {
     router.push('/case_history');
   };
 
+  const handleUserManagement = () => {
+    router.push('/manager_user');
+  }
+
   useEffect(() => {
     const userSession = sessionStorage.getItem("user");
     if (userSession) {
@@ -129,7 +133,7 @@ const Header = () => {
         const user = JSON.parse(userSession);
         const roles = user.roles || [];
         setIsAdmin(roles.includes("admin"));
-        setIsUser(roles.includes("user"));
+        setIsDoctor(roles.includes("doctor"));
       } catch (error) {
         console.error("Lỗi parse session:", error);
       }
@@ -221,42 +225,43 @@ const Header = () => {
                 <UserIcon size={18} className="mr-2" />
                 Thông tin cá nhân
               </button>
-              {isUser && (
                 <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleViewLocation}>
                   <MapPin size={18} className="mr-2" />
                   Xem vị trí bản thân
                 </button>
-              )}
-              {isUser && (
                 <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleCaseHistory}>
                   <FileText size={18} className="mr-2" />
-                  Lịch sử bệnh án
+                  Xem chỉ số sức khỏe
                 </button>
-              )}
-              {isAdmin && (
+              {isDoctor && (
                 <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleManagePatients}>
                   <Users size={18} className="mr-2" />
                   Quản lý bệnh nhân
                 </button>
               )}
-                   {isUser && (
+              {isAdmin &&  (
+                <button
+                className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100"
+                onClick={handleUserManagement}
+              >
+                <Users size={18} className="mr-2" />
+                Quản lý người dùng
+              </button>
+              )}
               <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleManageDevices}>
                 <Smartphone size={18} className="mr-2" />
                 Quản lý thiết bị
               </button>
-                 )}
       
               <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleInviteFamily}>
                 <Users size={18} className="mr-2" />
                 Mời người nhà
               </button>
         
-              {isUser && (
                 <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleHealthStats}>
                   <Heart size={18} className="mr-2" />
-                  Chỉ số sức khỏe
+                  Quản lý hồ sơ sức khỏe
                 </button>
-              )}
               <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleChangePassword}>
                 <Lock size={18} className="mr-2" />
                 Đổi mật khẩu

@@ -1,20 +1,23 @@
 "use client";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { useState, useEffect } from 'react';
 import API_ENDPOINTS from "../utils/apiConfig";
 import { User } from './types';
-import AdminRoleView from '../components/AdminRoleView';
-import DoctorRoleView from '../components/DoctorRoleView';
+import { useRouter } from 'next/navigation';
+import UserList from '../components/UserList';
 import ToggleAccountStatusView from '../components/ToggleAccountStatusView';
+import RoleManagementView from '../components/RoleManagementView';
 
-type ViewMode = 'toggleStatus' | 'addAdmin' | 'removeAdmin' | 'addDoctor' | 'removeDoctor';
+type ViewMode = 'user' | 'role' | 'healthProfile';
 
 export default function UserManagement() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [genderFilter, setGenderFilter] = useState<string>("all");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [searchTerm] = useState("");
+  const [genderFilter] = useState<string>("all");
+  const [roleFilter] = useState<string>("all");
   const [token, setToken] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('toggleStatus');
+  const [viewMode, setViewMode] = useState<ViewMode>('user');
+  const [roleType, setRoleType] = useState<'admin' | 'doctor'>('admin');
+  const router = useRouter();
 
   const removeAccents = (str: string) => {
     return str.normalize('NFD')
@@ -60,14 +63,15 @@ export default function UserManagement() {
     }));
   };
 
-  const { data: users, error, isLoading, mutate } = useSWR<User[]>(
+  const { data: users, error, isLoading } = useSWR<User[]>(
     token ? API_ENDPOINTS.getUsers : null,
     token ? fetcher : null,
     {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
+      revalidateIfStale: true,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
       refreshInterval: 0,
+      dedupingInterval: 2000,
       onSuccess: (data) => {
         console.log('Data fetched successfully:', data);
       },
@@ -96,135 +100,97 @@ export default function UserManagement() {
       })
     : [];
 
-  const renderView = () => {
-    switch (viewMode) {
-      case 'toggleStatus':
-        return <ToggleAccountStatusView users={filteredUsers} token={token} onSuccess={() => mutate()} />;
-      case 'addAdmin':
-        return <AdminRoleView users={filteredUsers} token={token} onSuccess={() => mutate()} mode="add" />;
-      case 'removeAdmin':
-        return <AdminRoleView users={filteredUsers} token={token} onSuccess={() => mutate()} mode="remove" />;
-      case 'addDoctor':
-        return <DoctorRoleView users={filteredUsers} token={token} onSuccess={() => mutate()} mode="add" />;
-      case 'removeDoctor':
-        return <DoctorRoleView users={filteredUsers} token={token} onSuccess={() => mutate()} mode="remove" />;
-      default:
-        return null;
-    }
+  const handleViewHealthProfile = (userId: string | number) => {
+    router.push(`/doctor_manager_user_information/${userId}`);
   };
 
   if (error) return <div className="text-center !py-60 text-xl font-bold">Bạn không đủ quyền hạn để truy cập vào hệ thống quản lý người dùng. Vui lòng đăng nhập lại bằng tài khoản admin</div>;
-  if (isLoading) return <div>Đang tải...</div>;
+  if (isLoading) return <div className="flex justify-center items-center h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+  </div>;
   if (!users) return <div>Không có dữ liệu</div>;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <p className="text-2xl !font-bold text-cyan-500 mb-6">Quản Lý Người Dùng</p>
-
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Tìm kiếm theo tên đăng nhập, tên bệnh nhân, số điện thoại hoặc email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-            />
-            <svg
-              className="absolute right-3 top-2.5 h-5 w-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex gap-8">
+        <div className="w-1/5">
+          <div className="flex flex-col gap-4">
+            <button
+              className={`px-3 py-2 rounded-lg font-bold ${viewMode === 'user' ? 'text-cyan-500 border-2 border-cyan-500' : 'text-gray-700 hover:text-cyan-500'}`}
+              onClick={() => setViewMode('user')}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+              Quản lý người dùng
+            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                className={`px-3 py-2 rounded-lg font-bold ${viewMode === 'role' ? 'text-cyan-500 border-2 border-cyan-500' : 'text-gray-700 hover:text-cyan-500'}`}
+                onClick={() => {
+                  setViewMode('role');
+                  setRoleType('admin'); // Set default role type when clicking role management
+                }}
+              >
+                Quản lý quyền truy cập
+              </button>
+              {viewMode === 'role' && (
+                <div className="flex flex-col gap-2 pl-4 mt-2">
+                  <button
+                    className={`px-3 py-2 rounded-lg font-bold ${roleType === 'admin' ? 'text-red-500 border-2 border-red-500' : 'text-gray-700 hover:text-red-500'}`}
+                    onClick={() => setRoleType('admin')}
+                  >
+                    Quản lý role Admin
+                  </button>
+                  <button
+                    className={`px-3 py-2 rounded-lg font-bold ${roleType === 'doctor' ? 'text-red-500 border-2 border-red-500' : 'text-gray-700 hover:text-red-500'}`}
+                    onClick={() => setRoleType('doctor')}
+                  >
+                    Quản lý role Doctor
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              className={`px-3 py-2 rounded-lg font-bold ${viewMode === 'healthProfile' ? 'text-cyan-500 border-2 border-cyan-500' : 'text-gray-700 hover:text-cyan-500'}`}
+              onClick={() => setViewMode('healthProfile')}
+            >
+              Quản lý hồ sơ sức khỏe
+            </button>
           </div>
         </div>
-        <div className="w-full sm:w-48">
-          <select
-            value={genderFilter}
-            onChange={(e) => setGenderFilter(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-          >
-            <option value="all">Tất cả giới tính</option>
-            <option value="male">Nam</option>
-            <option value="female">Nữ</option>
-          </select>
-        </div>
 
-        <div className="w-full sm:w-48">
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-          >
-            <option value="all">Tất cả vai trò</option>
-            <option value="admin">Admin</option>
-            <option value="user">User</option>
-          </select>
+        <div className="w-4/5">
+          {viewMode === 'user' && (
+            <ToggleAccountStatusView
+              users={filteredUsers}
+              token={token}
+              onSuccess={() => {
+                mutate(API_ENDPOINTS.getUsers);
+              }}
+            />
+          )}
+          {viewMode === 'role' && (
+            <div className="flex flex-col gap-4">
+              <RoleManagementView
+                users={filteredUsers}
+                token={token}
+                onSuccess={() => {
+                  mutate(API_ENDPOINTS.getUsers);
+                }}
+                roleType={roleType}
+              />
+            </div>
+          )}
+          {viewMode === 'healthProfile' && (
+            <UserList
+              users={filteredUsers}
+              onAction={handleViewHealthProfile}
+              actionButton={{
+                variant: "info",
+                label: "Xem hồ sơ sức khỏe"
+              }}
+            />
+          )}
         </div>
       </div>
-
-      <div className="mb-6 flex flex-wrap gap-2">
-        <button
-          onClick={() => setViewMode('toggleStatus')}
-          className={`px-4 py-2 rounded-lg ${
-            viewMode === 'toggleStatus'
-              ? 'bg-red-500 text-white !rounded'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 !rounded'
-          }`}
-        >
-          Khóa/Mở khóa tài khoản
-        </button>
-        <button
-          onClick={() => setViewMode('addAdmin')}
-          className={`px-4 py-2 rounded-lg ${
-            viewMode === 'addAdmin'
-              ? 'bg-blue-500 text-white !rounded'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 !rounded'
-          }`}
-        >
-          Thêm Admin
-        </button>
-        <button
-          onClick={() => setViewMode('removeAdmin')}
-          className={`px-4 py-2 rounded-lg ${
-            viewMode === 'removeAdmin'
-              ? 'bg-yellow-500 text-white !rounded'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 !rounded'
-          }`}
-        >
-          Gỡ Admin
-        </button>
-        <button
-          onClick={() => setViewMode('addDoctor')}
-          className={`px-4 py-2 rounded-lg ${
-            viewMode === 'addDoctor'
-              ? 'bg-green-500 text-white !rounded'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 !rounded'
-          }`}
-        >
-          Thêm Doctor
-        </button>
-        <button
-          onClick={() => setViewMode('removeDoctor')}
-          className={`px-4 py-2 rounded-lg ${
-            viewMode === 'removeDoctor'
-              ? 'bg-red-500 text-white !rounded'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 !rounded'
-          }`}
-        >
-          Gỡ Doctor
-        </button>
-      </div>
-
-      {renderView()}
 
       <style jsx global>{`
         .user-details-modal .modal-content {
