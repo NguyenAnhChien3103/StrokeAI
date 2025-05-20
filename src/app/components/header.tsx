@@ -43,9 +43,7 @@ const Header = () => {
 
   const navItems = [
     { href: "/", label: "Trang Chủ" },
-    { href: "https://www.prudential.com.vn/vi/blog-nhip-song-khoe/dot-quy-tre-hoa-va-nguy-co-cho-ca-mot-the-he/", label: "Bài Viết" },
     { href: "/first_aid_instructions", label: "Hướng dẫn sơ cứu" }, 
-    { href: "https://www.happymoveonline.vn/content/8097/c%C3%A1c-s%E1%BB%91-%C4%91i%E1%BB%87n-tho%E1%BA%A1i-kh%E1%BA%A9n-c%E1%BA%A5p-m%C3%A0-b%E1%BA%A1n-n%C3%AAn-ghi-nh%E1%BB%9B#:~:text=%2D%20112%20l%C3%A0%20%C4%91%E1%BA%A7u%20s%E1%BB%91%20y%C3%AAu,c%E1%BA%A5p%20c%E1%BB%A9u%20v%E1%BB%81%20y%20t%E1%BA%BF.", label: "Liên Hệ Cứu Hộ Khẩn Cấp" }
   ];
 
   const handleProfile = () => {
@@ -261,6 +259,10 @@ const Header = () => {
                 <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleHealthStats}>
                   <Heart size={18} className="mr-2" />
                   Quản lý hồ sơ sức khỏe
+                </button>
+                <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={() => router.push('/manager_warning')}>
+                  <Bell size={18} className="mr-2" />
+                  Quản lý cảnh báo
                 </button>
               <button className="flex items-center w-full text-left px-4 py-2 text-gray-700 font-bold hover:bg-gray-100" onClick={handleChangePassword}>
                 <Lock size={18} className="mr-2" />

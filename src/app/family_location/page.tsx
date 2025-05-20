@@ -26,10 +26,11 @@ const DynamicMap = dynamic(
 )
 
 interface GpsData {
+  gpsId: number
   userId: number
-  lat: number
   lon: number
-  timestamp: string
+  lat: number
+  createdAt: string
 }
 
 interface Hospital {
@@ -151,6 +152,15 @@ export default function MapPage() {
               <h3 className="font-bold">Vị trí người dùng</h3>
               <p>Latitude: {gpsData.lat.toFixed(6)}</p>
               <p>Longitude: {gpsData.lon.toFixed(6)}</p>
+              <p>Time: {new Date(gpsData.createdAt).toLocaleString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+              })}</p>
             </div>
           </Popup>
         </Marker>

@@ -115,7 +115,15 @@ export default function MapComponent({ patientLocation }: MapComponentProps) {
             <h3 className="font-bold">Vị trí bệnh nhân</h3>
             <p>Latitude: {patientLocation.lat.toFixed(6)}</p>
             <p>Longitude: {patientLocation.lon.toFixed(6)}</p>
-            <p>Cập nhật lần cuối: {new Date(patientLocation.lastUpdated).toLocaleString()}</p>
+            <p>Time: {new Date(patientLocation.lastUpdated).toLocaleString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+              })}</p>
           </div>
         </Popup>
       </Marker>

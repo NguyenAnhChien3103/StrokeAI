@@ -1,8 +1,8 @@
 "use client";
 import Image from "next/image";
-import { Button } from "react-bootstrap";
+import { Button, Container } from "react-bootstrap";
 import { motion } from "framer-motion";
-import { Calendar } from "lucide-react";
+import { Calendar , User } from "lucide-react";
 
 export default function Home() {
 
@@ -29,7 +29,8 @@ export default function Home() {
 
   return (
     <>
-      <div className="flex flex-col lg:flex-row items-center justify-between px-6 mt-2 lg:px-52 py-10">
+    <Container  className="max-w-lg mx-auto !px-20">
+    <div className="flex flex-col lg:flex-row items-center justify-between py-10">
         <div className="lg:w-1/2 flex flex-col items-start text-left">
           <p className="text-3xl lg:text-4xl !font-bold">
             Hãy để công nghệ đồng hành cùng bạn trên hành trình bảo vệ sức khỏe tim mạch
@@ -54,7 +55,7 @@ export default function Home() {
       </div>
 
       <div className="flex justify-center items-center py-10">
-        <div className="w-11/12 max-w-7xl flex flex-col lg:flex-row gap-6">
+        <div className="max-w-7xl flex flex-col lg:flex-row gap-6">
           <div className="lg:w-1/3 bg-gradient-to-b from-cyan-500 to-blue-500 p-8 rounded-xl text-white text-left">
             <p className="text-sm uppercase tracking-widest">Dịch vụ của chúng tôi</p>
             <p className="text-2xl font-bold mt-2 leading-snug">
@@ -72,7 +73,7 @@ export default function Home() {
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-md flex flex-col items-center text-center">
-              <div className="text-3xl mb-4">❤️</div>
+              <div className="text-3xl mb-4">🌏</div>
               <p className="font-bold text-lg m-0">Định vị bệnh nhân</p>
               <p className="text-gray-600 text-sm m-0">
                 Xác định và hiển thị vị trí bệnh nhân theo thời gian thực.
@@ -90,7 +91,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="md:mx-auto max-w-[80%] py-10 flex flex-col space-x-24  md:flex-row items-center rounded-lg">
+      <div className="md:mx-auto py-10 flex flex-col space-x-24  md:flex-row items-center rounded-lg">
         <div className="w-full md:w-auto flex justify-center ml-30">
           <Image 
             src="/woman_doctor.png" 
@@ -100,7 +101,7 @@ export default function Home() {
             className="rounded-lg w-40 md:w-70 object-contain"
           />
         </div>
-        <div className="md:w-1/2 mt-6 md:mt-0 px-6 md:px-10 text-left">
+        <div className="md:w-3/4 mt-6 md:mt-0 px-6 md:px-10 text-left">
           <div className="flex items-center justify-start space-x-3">
             <span className="text-blue-500 text-2xl">👥</span>
             <p className="text-cyan-500 text-lg font-semibold uppercase m-0">
@@ -116,7 +117,7 @@ export default function Home() {
         </div>
       </div>
 
-      <section className="bg-white mx-auto max-w-[90%] md:max-w-[80%] py-8 px-4 md:px-16 flex flex-col md:flex-row-reverse items-center">
+      <section className="bg-white mx-auto py-8 px-4 md:px-16 flex flex-col md:flex-row-reverse items-center">
         <div className="md:w-1/2 flex justify-center relative mt-6 md:mt-0">
           <div className="relative w-40 h-40 md:w-72 md:h-72 rounded-full overflow-hidden">
             <Image 
@@ -194,7 +195,7 @@ export default function Home() {
             <div key={index} className="bg-white p-6 rounded-xl shadow-md">
               <p className="text-gray-700 m-0">{item.content}</p>
               <div className="mt-4 flex items-center">
-                <div className="bg-gray-200 w-10 h-10 rounded-full"></div>
+              <User />
                 <div className="ml-4">
                   <p className="font-semibold text-green-600 m-0">{item.name}</p>
                   <p className="text-gray-500 text-sm m-0">{item.role}</p>
@@ -205,11 +206,11 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[95%] lg:max-w-[90%] mb-8 relative bg-cyan-50 rounded-full shadow-md px-8 py-8 sm:px-16 sm:py-10 flex flex-col sm:flex-row items-center justify-between text-center sm:text-left">
+      <div className="mx-auto mb-8 relative bg-cyan-50 rounded-full shadow-md px-8 py-8 sm:px-16 sm:py-10 flex flex-col sm:flex-row items-center justify-between text-center sm:text-left">
         <div>
-          <h2 className="text-2xl font-semibold">
+          <p className="text-2xl font-semibold">
             <span className="text-cyan-500 font-bold">Sẵn sàng chưa?</span> Hãy sử dụng sản phẩm của chúng tôi!
-          </h2>
+          </p>
           <p className="text-gray-500 mt-2">
             Chúng tôi ở đây để giúp bạn phát hiện và ngăn ngừa bệnh tật.
           </p>
@@ -223,6 +224,7 @@ export default function Home() {
           Liên hệ với chúng tôi ngay bây giờ
         </motion.button>
       </div>
+    </Container>
     </>
   );
 }

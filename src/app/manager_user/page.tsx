@@ -7,24 +7,15 @@ import { useRouter } from 'next/navigation';
 import UserList from '../components/UserList';
 import ToggleAccountStatusView from '../components/ToggleAccountStatusView';
 import RoleManagementView from '../components/RoleManagementView';
+import WarningManagementView from '../components/WarningManagementView';
 
-type ViewMode = 'user' | 'role' | 'healthProfile';
+type ViewMode = 'user' | 'role' | 'healthProfile' | 'warning';
 
 export default function UserManagement() {
-  const [searchTerm] = useState("");
-  const [genderFilter] = useState<string>("all");
-  const [roleFilter] = useState<string>("all");
   const [token, setToken] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('user');
   const [roleType, setRoleType] = useState<'admin' | 'doctor'>('admin');
   const router = useRouter();
-
-  const removeAccents = (str: string) => {
-    return str.normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd')
-      .replace(/Đ/g, 'D');
-  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -81,25 +72,6 @@ export default function UserManagement() {
     }
   );
 
-  const filteredUsers = Array.isArray(users)
-    ? users.filter(user => {
-        const searchTermNoAccent = removeAccents(searchTerm.toLowerCase());
-        const matchesSearch = searchTerm === "" ||
-          removeAccents(user.username.toLowerCase()).includes(searchTermNoAccent) ||
-          removeAccents(user.patientName.toLowerCase()).includes(searchTermNoAccent) ||
-          user.phone.includes(searchTerm) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-        const matchesGender = genderFilter === "all" ||
-          (genderFilter === "male" && Number(user.gender) === 0) ||
-          (genderFilter === "female" && Number(user.gender) === 1);
-
-        const matchesRole = roleFilter === "all" || user.roles.includes(roleFilter);
-
-        return matchesSearch && matchesGender && matchesRole;
-      })
-    : [];
-
   const handleViewHealthProfile = (userId: string | number) => {
     router.push(`/doctor_manager_user_information/${userId}`);
   };
@@ -126,7 +98,7 @@ export default function UserManagement() {
                 className={`px-3 py-2 rounded-lg font-bold ${viewMode === 'role' ? 'text-cyan-500 border-2 border-cyan-500' : 'text-gray-700 hover:text-cyan-500'}`}
                 onClick={() => {
                   setViewMode('role');
-                  setRoleType('admin'); // Set default role type when clicking role management
+                  setRoleType('admin');
                 }}
               >
                 Quản lý quyền truy cập
@@ -154,13 +126,19 @@ export default function UserManagement() {
             >
               Quản lý hồ sơ sức khỏe
             </button>
+            <button
+              className={`px-3 py-2 rounded-lg font-bold ${viewMode === 'warning' ? 'text-cyan-500 border-2 border-cyan-500' : 'text-gray-700 hover:text-cyan-500'}`}
+              onClick={() => setViewMode('warning')}
+            >
+              Quản lý cảnh báo
+            </button>
           </div>
         </div>
 
         <div className="w-4/5">
           {viewMode === 'user' && (
             <ToggleAccountStatusView
-              users={filteredUsers}
+              users={users}
               token={token}
               onSuccess={() => {
                 mutate(API_ENDPOINTS.getUsers);
@@ -170,7 +148,7 @@ export default function UserManagement() {
           {viewMode === 'role' && (
             <div className="flex flex-col gap-4">
               <RoleManagementView
-                users={filteredUsers}
+                users={users}
                 token={token}
                 onSuccess={() => {
                   mutate(API_ENDPOINTS.getUsers);
@@ -181,13 +159,16 @@ export default function UserManagement() {
           )}
           {viewMode === 'healthProfile' && (
             <UserList
-              users={filteredUsers}
+              users={users}
               onAction={handleViewHealthProfile}
               actionButton={{
                 variant: "info",
                 label: "Xem hồ sơ sức khỏe"
               }}
             />
+          )}
+          {viewMode === 'warning' && (
+            <WarningManagementView token={token} />
           )}
         </div>
       </div>

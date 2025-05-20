@@ -11,7 +11,7 @@ export default function Footer() {
           <div className="flex flex-col items-start">
             <div className="flex items-center gap-2">
               <Image src="/logo.png" alt="Logo StrokeAI" width={40} height={40} />
-              <span className="text-2xl font-semibold text-teal-600">StrokeAI</span>
+              <span className="text-2xl font-semibold text-cyan-500">StrokeAI</span>
             </div>
             <div className="mt-3">
               <div className="flex gap-4 text-2xl">
@@ -38,29 +38,19 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-2">LIÊN KẾT HỮU ÍCH</h4>
             <ul className="space-y-1">
               <li>
-                <Link href="/privacy" className="!no-underline !text-black">
-                  Chính sách bảo mật
-                </Link>
+                <p className="!text-black">Chính sách bảo mật</p>
               </li>
               <li>
-                <Link href="/services" className="!no-underline !text-black">
-                  Dịch vụ của chúng tôi
-                </Link>
+                <p className="!text-black">Dịch vụ của chúng tôi</p>
               </li>
               <li>
-                <Link href="/forums" className="!no-underline !text-black">
-                  Diễn đàn
-                </Link>
+                <p className="!text-black">Diễn đàn</p>
               </li>
               <li>
-                <Link href="/categories" className="!no-underline !text-black">
-                  Danh mục
-                </Link>
+                <p className="!text-black">Danh mục</p>
               </li>
               <li>
-                <Link href="/testimonials" className="!no-underline !text-black">
-                  Đánh giá từ khách hàng
-                </Link>
+                <p className="!text-black">Đánh giá từ khách hàng</p>
               </li>
             </ul>
           </div>
@@ -68,24 +58,16 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-2">TRUY CẬP NHANH</h4>
             <ul className="space-y-1">
               <li>
-                <Link href="/licenses" className="!no-underline !text-black">
-                  Giấy phép
-                </Link>
+                <p className="!text-black">Giấy phép</p>
               </li>
               <li>
-                <Link href="/reviews" className="!no-underline !text-black">
-                  Đánh giá
-                </Link>
+                <p className="!text-black">Đánh giá</p>
               </li>
               <li>
-                <Link href="/contact" className="!no-underline !text-black">
-                  Liên hệ
-                </Link>
+                <p className="!text-black">Liên hệ</p>
               </li>
               <li>
-                <Link href="/support" className="!no-underline !text-black">
-                  Chính sách hỗ trợ
-                </Link>
+                <p className="!text-black">Chính sách hỗ trợ</p>
               </li>
             </ul>
           </div>
@@ -93,31 +75,22 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-2">CÁC LIÊN KẾT KHÁC</h4>
             <ul className="space-y-1">
               <li>
-                <Link href="/about" className="!no-underline !text-black">
-                  Về chúng tôi
-                </Link>
+                <p className="!text-black">Về chúng tôi</p>
               </li>
               <li>
-                <Link href="/projects" className="!no-underline !text-black">
-                  Dự án của chúng tôi
-                </Link>
+                <p className="!text-black">Dự án của chúng tôi</p>
               </li>
               <li>
-                <Link href="/office" className="!no-underline !text-black">
-                  Văn phòng của chúng tôi
-                </Link>
+                <p className="!text-black">Văn phòng của chúng tôi</p>
               </li>
               <li>
-                <Link href="/location" className="!no-underline !text-black">
-                  Địa điểm của chúng tôi
-                </Link>
+                <p className="!text-black">Địa điểm của chúng tôi</p>
               </li>
             </ul>
           </div>
         </div>
       </div>
       <div className="bg-teal-700 text-white text-center py-3">
-        &copy; Người chịu trách nhiệm nội dung: Ano
       </div>
     </footer>
   );

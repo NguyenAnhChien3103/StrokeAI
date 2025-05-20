@@ -1,13 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Container } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import { useRouter } from 'next/navigation';
 
 export default function AddMedicalData() {
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState('00:00');
+  const [token, setToken] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const [formData, setFormData] = useState({
     Series: '',
@@ -23,6 +27,17 @@ export default function AddMedicalData() {
     const hour = i * 2;
     return `${hour.toString().padStart(2, '0')}:00`;
   });
+
+  useEffect(() => {
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setToken(parsedUser.token);
+      setIsAuthenticated(true);
+    } else {
+      router.push('/404');
+    }
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -62,6 +77,7 @@ export default function AddMedicalData() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(requestData),
       });
@@ -78,6 +94,10 @@ export default function AddMedicalData() {
       alert("Gửi thất bại!");
     }
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Container className="max-w-lg mx-auto !px-20 py-5">

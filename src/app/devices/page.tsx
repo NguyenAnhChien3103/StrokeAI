@@ -39,12 +39,12 @@ export default function DevicesPage() {
     try {
       const res = await fetch(API_ENDPOINTS.getDevices(userId), {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
       if (!res.ok) throw new Error('Không thể lấy danh sách thiết bị');
       const data = await res.json();
-      setDevices(data || []);
+      setDevices(data.devices || []);
     } catch {
       setDevices([]);
     }

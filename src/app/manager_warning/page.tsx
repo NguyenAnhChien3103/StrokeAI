@@ -1,36 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Table, Button, Modal } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import React, { useEffect, useState } from 'react';
+import { Container } from 'react-bootstrap';
+import { FaCheckCircle, FaSearch } from 'react-icons/fa';
+import { TriangleAlert } from 'lucide-react';
 
 interface Warning {
   warningId: number;
-  userId: number;
-  patientName: string;
   description: string;
   createdAt: string;
   formattedTimestamp: string;
-  isActive: boolean;
 }
 
-interface WarningDetail {
-  warningId: number;
-  userId: number;
-  patientName: string;
-  description: string;
-  createdAt: string;
-  formattedTimestamp: string;
-  isActive: boolean;
-}
-
-
-
-export default function WarningManagement() {
+const ManagerWarning = () => {
   const [warnings, setWarnings] = useState<Warning[]>([]);
-  const [selectedWarning, setSelectedWarning] = useState<WarningDetail | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -42,138 +28,113 @@ export default function WarningManagement() {
     }
   }, []);
 
+  const fetchWarnings = async () => {
+    try {
+      setLoading(true);
+      const url = 'http://localhost:5062/api/Warning/my-warnings';
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        setWarnings([]);
+        return;
+      }
+
+      const data = await response.json();
+      setWarnings(data.warnings);
+    } catch {
+      setWarnings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       fetchWarnings();
     }
   }, [token]);
 
-  const fetchWarnings = async () => {
-    try {
-      const response = await fetch('http://localhost:5062/api/Warning', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setWarnings(data.warnings);
-    } catch (error) {
-      console.error('Error fetching warnings:', error);
-      setWarnings([]);
-    }
+  const getWarningIcon = () => {
+    return <TriangleAlert className="text-red-500 text-lg" />;
   };
 
-  const handleViewDetail = async (warningId: number) => {
-    try {
-      const response = await fetch(`http://localhost:5062/api/Warning/${warningId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setSelectedWarning(data);
-      setShowModal(true);
-    } catch (error) {
-      console.error('Error fetching warning detail:', error);
-    }
-  };
+  const filteredWarnings = warnings.filter(warning =>
+    warning.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="container py-4">
-      <h1 className="mb-4">Quản lý cảnh báo / Warning Management</h1>
-      
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Tên bệnh nhân / Patient Name</th>
-            <th>Mô tả / Description</th>
-            <th>Thời gian / Time</th>
-            <th>Trạng thái / Status</th>
-            <th>Thao tác / Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {warnings.map((warning) => (
-            <tr key={warning.warningId}>
-              <td>{warning.warningId}</td>
-              <td>{warning.patientName}</td>
-              <td>{warning.description}</td>
-              <td>{warning.formattedTimestamp}</td>
-              <td>
-                <span className={`badge ${warning.isActive ? 'bg-success' : 'bg-danger'}`}>
-                  {warning.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </td>
-              <td>
-                <Button 
-                  variant="outline-primary"
-                  onClick={() => handleViewDetail(warning.warningId)}
-                >
-                  Xem chi tiết / View Details
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+    <Container className="max-w-lg mx-auto !px-20 py-5">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-2xl !font-bold text-cyan-500 mb-6">Quản lý cảnh báo</p>
+        <div className="flex items-center space-x-2">
+          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            {filteredWarnings.length} cảnh báo
+          </span>
+        </div>
+      </div>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Chi tiết cảnh báo / Warning Details</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedWarning && (
-            <div className="container">
-              <div className="row mb-2">
-                <div className="col-4 fw-bold">ID:</div>
-                <div className="col-8">{selectedWarning.warningId}</div>
-              </div>
-              <div className="row mb-2">
-                <div className="col-4 fw-bold">Tên bệnh nhân / Patient Name:</div>
-                <div className="col-8">{selectedWarning.patientName}</div>
-              </div>
-              <div className="row mb-2">
-                <div className="col-4 fw-bold">Mô tả / Description:</div>
-                <div className="col-8">{selectedWarning.description}</div>
-              </div>
-              <div className="row mb-2">
-                <div className="col-4 fw-bold">Thời gian / Time:</div>
-                <div className="col-8">{selectedWarning.formattedTimestamp}</div>
-              </div>
-              <div className="row mb-2">
-                <div className="col-4 fw-bold">Trạng thái / Status:</div>
-                <div className="col-8">
-                  <span className={`badge ${selectedWarning.isActive ? 'bg-success' : 'bg-danger'}`}>
-                    {selectedWarning.isActive ? 'Active' : 'Inactive'}
-                  </span>
+      <div className="relative mb-4">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <FaSearch className="text-gray-400 text-sm" />
+        </div>
+        <input
+          type="text"
+          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+          placeholder="Tìm kiếm cảnh báo..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+        </div>
+      ) : filteredWarnings.length === 0 ? (
+        <div className="text-center py-8 bg-gray-50 rounded-lg">
+          <FaCheckCircle className="text-green-500 text-3xl mx-auto mb-2" />
+          <p className="text-gray-600 text-sm">Không có cảnh báo nào</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredWarnings.map((warning) => (
+            <div
+              key={warning.warningId}
+              className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border-l-4 border-red-500"
+            >
+              <div className="p-2.5">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mr-2 mt-0.5">
+                    {getWarningIcon()}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h5 className="text-sm font-semibold text-red-700">
+                        {warning.description.split('(')[0].trim()}
+                      </h5>
+                      <span className="text-xs text-gray-500 ml-2">
+                        {warning.formattedTimestamp}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 text-xs leading-normal">
+                      {warning.description.includes('(') ? 
+                        warning.description.split('(')[1].replace(')', '') : 
+                        warning.description}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Đóng / Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </div>
+          ))}
+        </div>
+      )}
+    </Container>
   );
-}
+};
+
+export default ManagerWarning;
